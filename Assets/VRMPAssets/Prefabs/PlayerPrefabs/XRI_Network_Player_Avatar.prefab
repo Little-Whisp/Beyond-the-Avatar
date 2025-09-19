@@ -289,6 +289,7 @@ GameObject:
   - component: {fileID: 4588994832583027022}
   - component: {fileID: 8435302620866516779}
   - component: {fileID: 2722608077457501448}
+  - component: {fileID: 1596053583424470562}
   m_Layer: 0
   m_Name: XRI_Network_Player_Avatar
   m_TagString: Untagged
@@ -535,6 +536,19 @@ MonoBehaviour:
   m_QuestColor: {r: 0.101960786, g: 0.101960786, b: 0.49803922, a: 1}
   m_AndroidColor: {r: 0.101960786, g: 0.34117648, b: 0.101960786, a: 1}
   m_OtherColor: {r: 0.53333336, g: 0.101960786, b: 0.101960786, a: 1}
+--- !u!114 &1596053583424470562
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5358844088564582620}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ff66036d11417e41bbe5741a925f86f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSpawnController
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!1 &5908336471056132768
 GameObject:
   m_ObjectHideFlags: 0
