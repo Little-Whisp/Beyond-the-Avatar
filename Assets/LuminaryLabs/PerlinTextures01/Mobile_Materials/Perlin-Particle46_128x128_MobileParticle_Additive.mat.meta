@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: b4138420ea19638498f98ab9372c2b6e
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 307028
+  packageName: 50 Perlin Particle Textures Part 1
+  packageVersion: 0.1.0
+  assetPath: Assets/LuminaryLabs/PerlinTextures01/Mobile_Materials/Perlin-Particle46_128x128_MobileParticle_Additive.mat
+  uploadId: 722007

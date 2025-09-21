@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 8439b45fd6a7b1347a9314a5f9d973c7
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 307028
+  packageName: 50 Perlin Particle Textures Part 1
+  packageVersion: 0.1.0
+  assetPath: Assets/LuminaryLabs/PerlinTextures01/Mobile_Materials/Perlin-Particle32_256x256_MobileParticle_AlphaBlended.mat
+  uploadId: 722007

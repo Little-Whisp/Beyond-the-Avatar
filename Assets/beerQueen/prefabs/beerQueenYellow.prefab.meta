@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 1f728fb37eb4377489d0c6bd55fb0a4c
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 302662
+  packageName: 5 bottles of "Beer Queen" (3D)
+  packageVersion: 1.0
+  assetPath: Assets/beerQueen/prefabs/beerQueenYellow.prefab
+  uploadId: 708751

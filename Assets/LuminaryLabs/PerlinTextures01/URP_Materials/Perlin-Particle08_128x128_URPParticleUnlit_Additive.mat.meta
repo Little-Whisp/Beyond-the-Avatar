@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 4eae3b1d2cd8fda4193430f9c0b91f9e
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 307028
+  packageName: 50 Perlin Particle Textures Part 1
+  packageVersion: 0.1.0
+  assetPath: Assets/LuminaryLabs/PerlinTextures01/URP_Materials/Perlin-Particle08_128x128_URPParticleUnlit_Additive.mat
+  uploadId: 722007

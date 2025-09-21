@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: c8f0a445f5941e84eb08a008b2dfd341
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 330579
+  packageName: Liquid and Bottles Shader
+  packageVersion: 1.0
+  assetPath: Assets/Adrift Team/LiquidContainer/Shaders/WobbleLiquid.cs
+  uploadId: 782776

@@ -1,0 +1,10 @@
+# ninja log v5
+104	4674	7802009590009607	GameActivity/CMakeFiles/game.dir/UGAInputKeyEvent.cpp.o	854510a21315c9ea
+143	4821	7802009591315817	GameActivity/CMakeFiles/game.dir/UGAEntry.cpp.o	ba10b2bc4ec56298
+36	4910	7802009592433233	GameActivity/CMakeFiles/game.dir/UGAConfiguration.cpp.o	cd147c030fbf601a
+202	5055	7802009593902358	GameActivity/CMakeFiles/game.dir/UGAInputMotionEvent.cpp.o	ab9dde4024b5c82c
+67	5131	7802009594646127	GameActivity/CMakeFiles/game.dir/UGADebug.cpp.o	7c1d6d10076eca31
+243	5357	7802009597018859	GameActivity/CMakeFiles/game.dir/UGASoftKeyboard.cpp.o	e0b8fe7a8b978023
+171	5610	7802009599563629	GameActivity/CMakeFiles/game.dir/UGAInput.cpp.o	2c59186bf0bf9e23
+1	5717	7802009600616826	GameActivity/CMakeFiles/game.dir/UGAApplication.cpp.o	a858599d4a45198a
+5718	5987	7802009603311989	C:/Users/slmar/Beyond the Avatar/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/4xsi1q3k/obj/arm64-v8a/libgame.so	16e593f23c4cb813
