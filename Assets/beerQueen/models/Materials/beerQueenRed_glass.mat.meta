@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 017305d97d6935c4e9b78f0e842682b4
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 302662
+  packageName: 5 bottles of "Beer Queen" (3D)
+  packageVersion: 1.0
+  assetPath: Assets/beerQueen/models/Materials/beerQueenRed_glass.mat
+  uploadId: 708751

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 43536024367d3d04e90190e992be2f61
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 330579
+  packageName: Liquid and Bottles Shader
+  packageVersion: 1.0
+  assetPath: Assets/Adrift Team/LiquidContainer/Materials/MatLiquid 3.mat
+  uploadId: 782776

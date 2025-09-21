@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: ea020226a626a964eb037da5e0a87670
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 307028
+  packageName: 50 Perlin Particle Textures Part 1
+  packageVersion: 0.1.0
+  assetPath: Assets/LuminaryLabs/PerlinTextures01/URP_Assets/PerlinTextures01_URP_Asset_Renderer.asset
+  uploadId: 722007

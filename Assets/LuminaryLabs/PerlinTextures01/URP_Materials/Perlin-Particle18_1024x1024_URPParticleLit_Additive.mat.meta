@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: a95f14607203108409c795008c82e783
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 307028
+  packageName: 50 Perlin Particle Textures Part 1
+  packageVersion: 0.1.0
+  assetPath: Assets/LuminaryLabs/PerlinTextures01/URP_Materials/Perlin-Particle18_1024x1024_URPParticleLit_Additive.mat
+  uploadId: 722007

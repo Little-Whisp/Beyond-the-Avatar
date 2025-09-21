@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 55c295b08c66eeb4c9f013d9379d733a
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 307028
+  packageName: 50 Perlin Particle Textures Part 1
+  packageVersion: 0.1.0
+  assetPath: Assets/LuminaryLabs/PerlinTextures01/Demo/PerlinParticle5_Additive.prefab
+  uploadId: 722007
