@@ -66,9 +66,10 @@ Material:
     - _Rim_Power: 9.06
     - _WobbleX: 0
     - _WobbleZ: 0
+    - _XRMotionVectorsPass: 1
     m_Colors:
     - _BottomColor: {r: 0.590619, g: 0, b: 0.03071345, a: 1}
-    - _FillAmount: {r: -0.15600091, g: 0.12, b: 0.68749547, a: 0}
+    - _FillAmount: {r: 0, g: -1.07, b: 0, a: 0}
     - _FoamColor: {r: 0.87169814, g: 0.13651115, b: 0.14589646, a: 1}
     - _Rim_Color: {r: 0.23773581, g: 0, b: 0.06664169, a: 1}
     - _TopColor: {r: 0.96981126, g: 0.0494054, b: 0.06165728, a: 1}
