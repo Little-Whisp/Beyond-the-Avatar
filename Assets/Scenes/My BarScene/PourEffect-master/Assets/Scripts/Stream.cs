@@ -73,11 +73,14 @@ public class Stream : MonoBehaviour
         if (Physics.Raycast(new Ray(startPoint, Vector3.down), out RaycastHit hit, maxDistance))
         {
             GlassFill glass = hit.collider.GetComponentInParent<GlassFill>();
-            if (glass != null)
+            if (glass != null && !glass.IsFull)
             {
                 float ml = flowMlPerSec * Time.deltaTime;
+                // trim last bit so we don't overshoot
+                ml = Mathf.Min(ml, glass.capacityMl - glass.currentMl);
                 glass.AddLiquid(ml);
             }
+
         }
     }
 
