@@ -1,37 +1,99 @@
 using UnityEngine;
-
-[RequireComponent(typeof(Rigidbody))]
+using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Interactors;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 public class ShakeSound : MonoBehaviour
 {
-    public AudioSource shakeSound;
-    public float shakeThreshold = 2.0f; // How much speed change counts as a "shake"
-    public float cooldown = 0.2f;       // Minimum time between sounds
+    [Header("Refs")]
+    public AudioSource audioSource;          // your shaker clip
+    public XRSocketInteractor lidSocket;     // Snap Point socket
+    public XRGrabInteractable cupGrab;       // cup's XR Grab (optional)
 
-    private Rigidbody rb;
-    private Vector3 lastVelocity;
-    private float lastSoundTime;
+    [Header("Tuning")]
+    public float speedThreshold = 1.3f;      // m/s of movement
+    public float accelThreshold = 6f;        
+    public float angularThreshold = 180f;    // deg/s spin burst
+    public float angularWeight = 0.10f;      // small bonus from spin
+    public float cooldown = 0.18f;           // min time between sounds
+    public float armDelayAfterAttach = 0.35f;
+    public bool requireHeld = true;          // only when player is holding
 
-    void Start()
+    Vector3 lastPos, lastVel;
+    Quaternion lastRot;
+    float nextTime, armUntil;
+    bool lidOn;
+
+    void Awake()
     {
-        rb = GetComponent<Rigidbody>();
-        lastVelocity = rb.linearVelocity;
+        if (!cupGrab) cupGrab = GetComponent<XRGrabInteractable>();
+        if (lidSocket)
+        {
+            lidSocket.selectEntered.AddListener(_ => { lidOn = true;  armUntil = Time.time + armDelayAfterAttach; ResetDeltas(); });
+            lidSocket.selectExited .AddListener(_ => { lidOn = false; });
+            lidOn = lidSocket.hasSelection;
+        }
+    }
+
+    void OnEnable() { ResetDeltas(); }
+    void OnDisable()
+    {
+        if (lidSocket)
+        {
+            lidSocket.selectEntered.RemoveAllListeners();
+            lidSocket.selectExited .RemoveAllListeners();
+        }
+    }
+
+    void ResetDeltas()
+    {
+        lastPos = transform.position;
+        lastRot = transform.rotation;
+        lastVel = Vector3.zero;
+        nextTime = 0f;
     }
 
     void Update()
     {
-        Vector3 velocityChange = rb.linearVelocity - lastVelocity;
+        float dt = Time.deltaTime;
+        if (dt <= 0f) return;
 
-        // Check if the object was "shaken" (big velocity change)
-        if (velocityChange.magnitude > shakeThreshold)
+        // gates: lid attached, armed, (optionally) being held
+        if (!lidOn || Time.time < armUntil) { ResetFrame(dt); return; }
+        if (requireHeld && cupGrab && !cupGrab.isSelected) { ResetFrame(dt); return; }
+
+        // transform-delta motion (works with Instantaneous / Kinematic)
+        Vector3 pos = transform.position;
+        Quaternion rot = transform.rotation;
+
+        Vector3 vel = (pos - lastPos) / dt;                     // m/s
+        float speed = vel.magnitude + Quaternion.Angle(lastRot, rot) / dt * angularWeight;
+        Vector3 acc = (vel - lastVel) / dt;                     // m/s²
+        float angDegPerSec = Quaternion.Angle(lastRot, rot) / dt;
+
+        bool directionFlip = Vector3.Dot(vel, lastVel) < -0.2f; // ~>100° reversal
+
+        bool isShake =
+            speed > speedThreshold &&
+            (directionFlip || acc.magnitude > accelThreshold || angDegPerSec > angularThreshold);
+
+        if (isShake && Time.time >= nextTime)
         {
-            if (Time.time - lastSoundTime > cooldown)
-            {
-                shakeSound.Play();
-                lastSoundTime = Time.time;
-            }
+            if (audioSource && audioSource.clip)
+                audioSource.PlayOneShot(audioSource.clip);
+            nextTime = Time.time + cooldown;
         }
 
-        lastVelocity = rb.linearVelocity;
+        // keep history
+        lastPos = pos;
+        lastRot = rot;
+        lastVel = vel;
+    }
+
+    void ResetFrame(float dt)
+    {
+        lastPos = transform.position;
+        lastRot = transform.rotation;
+        lastVel = Vector3.zero;
     }
 }
