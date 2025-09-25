@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: f87d4306b677ab349a05770a192a450f
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 248247
+  packageName: Jacky's Lowpoly Cocktail Pack
+  packageVersion: 1.0
+  assetPath: Assets/Jackys_CocktailPack/Materials/mat_CocktailsAtlas01.mat
+  uploadId: 567351
