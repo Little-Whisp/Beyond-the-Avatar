@@ -2823,7 +2823,7 @@ Transform:
   m_GameObject: {fileID: 1056205151}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.21, z: 0}
+  m_LocalPosition: {x: 0, y: 0.2019, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2844,6 +2844,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ShakerSnapPoint
   container: {fileID: 4517728583116988545}
   pourer: {fileID: 4517728583116988552}
+  mix: {fileID: 4517728583116988553}
   ignoreCupVsLidWhileSnapped: 1
 --- !u!114 &1056205154
 MonoBehaviour:
@@ -2862,7 +2863,7 @@ MonoBehaviour:
     m_Bits: 2
   m_Handedness: 0
   m_AttachTransform: {fileID: 181482772}
-  m_KeepSelectedTargetValid: 0
+  m_KeepSelectedTargetValid: 1
   m_DisableVisualsWhenBlockedInGroup: 1
   m_StartingSelectedInteractable: {fileID: 0}
   m_StartingTargetFilter: {fileID: 0}
@@ -2885,7 +2886,7 @@ MonoBehaviour:
   m_InteractableCantHoverMeshMaterial: {fileID: 0}
   m_SocketActive: 1
   m_InteractableHoverScale: 1
-  m_RecycleDelayTime: 1
+  m_RecycleDelayTime: 0.15
   m_HoverSocketSnapping: 0
   m_SocketSnappingRadius: 0.1
   m_SocketScaleMode: 0
@@ -3849,6 +3850,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CapSnapPoint
   container: {fileID: 4517728583116988545}
+  mix: {fileID: 4517728583116988553}
 --- !u!114 &1405224750
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3866,7 +3868,7 @@ MonoBehaviour:
     m_Bits: 16
   m_Handedness: 0
   m_AttachTransform: {fileID: 776865234}
-  m_KeepSelectedTargetValid: 0
+  m_KeepSelectedTargetValid: 1
   m_DisableVisualsWhenBlockedInGroup: 1
   m_StartingSelectedInteractable: {fileID: 0}
   m_StartingTargetFilter: {fileID: 0}
@@ -3889,7 +3891,7 @@ MonoBehaviour:
   m_InteractableCantHoverMeshMaterial: {fileID: 0}
   m_SocketActive: 1
   m_InteractableHoverScale: 1
-  m_RecycleDelayTime: 1
+  m_RecycleDelayTime: 0.15
   m_HoverSocketSnapping: 0
   m_SocketSnappingRadius: 0.1
   m_SocketScaleMode: 0
@@ -6991,6 +6993,7 @@ GameObject:
   - component: {fileID: 4517728583116988550}
   - component: {fileID: 4517728583116988551}
   - component: {fileID: 4517728583116988552}
+  - component: {fileID: 4517728583116988553}
   m_Layer: 0
   m_Name: Shaker_Body
   m_TagString: Untagged
@@ -7108,6 +7111,7 @@ MonoBehaviour:
   mixProgress: 0
   mixNeeded: 1
   palette: {fileID: 11400000, guid: 830a19816a3bbe34191f5c370e04f35c, type: 2}
+  HasLiquid: 0
   IsSealed: 0
   IsCapped: 1
   mlOld: 0
@@ -7378,6 +7382,30 @@ MonoBehaviour:
   requireSealedLid: 1
   requireUncapped: 1
   requireMixed: 1
+--- !u!114 &4517728583116988553
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3889388901158189626}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ded1f489a9378bb488fdb329efbe22e5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShakerMixController
+  container: {fileID: 4517728583116988545}
+  rb: {fileID: 4517728583116988548}
+  linearSpeed: 1.2
+  angularSpeed: 3
+  sustain: 0.5
+  energyPerMeter: 0.25
+  onMixStart:
+    m_PersistentCalls:
+      m_Calls: []
+  onMixStop:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!4 &5923519417663232760
 Transform:
   m_ObjectHideFlags: 0
@@ -7480,7 +7508,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.XR.Interaction.Toolkit::UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable
   m_InteractionManager: {fileID: 0}
-  m_Colliders: []
+  m_Colliders:
+  - {fileID: 6938046012409719804}
   m_InteractionLayers:
     m_Bits: 16
   m_DistanceCalculationMode: 1
@@ -7727,7 +7756,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.XR.Interaction.Toolkit::UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable
   m_InteractionManager: {fileID: 0}
-  m_Colliders: []
+  m_Colliders:
+  - {fileID: 8749912011645273536}
   m_InteractionLayers:
     m_Bits: 2
   m_DistanceCalculationMode: 1

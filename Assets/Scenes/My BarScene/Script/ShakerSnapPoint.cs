@@ -9,6 +9,7 @@ public class ShakerSnapPoint : MonoBehaviour
     [Header("Refs")]
     public ShakerContainer container;
     public ShakerPourDetector pourer;
+    public ShakerMixController mix;
 
     [Header("Collisions (optional)")]
     public bool ignoreCupVsLidWhileSnapped = true;
@@ -35,49 +36,39 @@ public class ShakerSnapPoint : MonoBehaviour
 
     void OnSelectEntered(SelectEnterEventArgs args)
     {
-        // If the socket selected it, it’s the lid. No extra checks needed.
         if (container) container.IsSealed = true;
 
-        if (args.interactableObject is XRGrabInteractable grab)
+        if (args.interactableObject is XRGrabInteractable grab &&
+            grab.TryGetComponent<Rigidbody>(out var rb))
         {
-            var rb = grab.GetComponent<Rigidbody>();
-            if (rb)
-            {
-                rb.isKinematic = true;
-                rb.useGravity = false;
-                rb.SetLinVel(Vector3.zero);
-                rb.angularVelocity = Vector3.zero;
-            }
-            // grab.movementType = XRBaseInteractable.MovementType.Kinematic;
+            rb.isKinematic = true;
+            rb.useGravity = false;
+            rb.SetLinVel(Vector3.zero);
+            rb.angularVelocity = Vector3.zero;
         }
 
-        if (ignoreCupVsLidWhileSnapped && args.interactableObject is XRGrabInteractable grab3)
+        if (ignoreCupVsLidWhileSnapped && args.interactableObject is XRGrabInteractable g3)
         {
-            var lidCols = grab3.GetComponentsInChildren<Collider>(true);
+            var lidCols = g3.GetComponentsInChildren<Collider>(true);
             ToggleIgnore(lidCols, cupCols, true);
         }
     }
 
     void OnSelectExited(SelectExitEventArgs args)
     {
-        if (container && container.HasLiquid)
-        {
-            Resnap(args.interactableObject as XRGrabInteractable);
-            return;
-        }
+        bool fromThisSocket = args.interactorObject is UnityEngine.XR.Interaction.Toolkit.Interactors.XRSocketInteractor;
+        var grab = args.interactableObject as XRGrabInteractable;
+
+        // Only resnap while actively mixing
+        if (fromThisSocket && mix && mix.IsMixing)
+        { Resnap(grab); return; }
 
         if (container) container.IsSealed = false;
 
-        var grab = args.interactableObject as XRGrabInteractable;
-        if (grab)
+        if (grab && grab.TryGetComponent<Rigidbody>(out var rb))
         {
-            var rb = grab.GetComponent<Rigidbody>();
-            if (rb)
-            {
-                rb.isKinematic = false;
-                rb.useGravity = true;
-            }
-            // grab.movementType = XRBaseInteractable.MovementType.VelocityTracking;
+            rb.isKinematic = false;
+            rb.useGravity = true;
         }
 
         if (ignoreCupVsLidWhileSnapped && grab)
@@ -93,8 +84,7 @@ public class ShakerSnapPoint : MonoBehaviour
         var attach = socket.attachTransform ? socket.attachTransform : socket.transform;
         grab.transform.SetPositionAndRotation(attach.position, attach.rotation);
 
-        var rb = grab.GetComponent<Rigidbody>();
-        if (rb)
+        if (grab.TryGetComponent<Rigidbody>(out var rb))
         {
             rb.isKinematic = true;
             rb.useGravity = false;
