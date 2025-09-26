@@ -23,8 +23,11 @@ public class ShakerContainer : MonoBehaviour
     public FlavorPalette palette;              // set in Inspector
 
     [Header("State (for pour rules)")]
-    public bool IsSealed = false;              // lid snapped on/off
-    public bool IsCapped = true;               // spout cap on/off (if used)
+    public bool HasLiquid;
+    public bool IsSealed;              // lid snapped on/off
+    public bool IsCapped;               // spout cap on/off (if used)
+
+    public bool CanMix => IsSealed && IsCapped; 
 
     // volumes (ml)
     public float mlOld, mlLife, mlImp;
@@ -43,7 +46,7 @@ public class ShakerContainer : MonoBehaviour
 
     public float TotalMl   => mlOld + mlLife + mlImp;
     public bool  IsFull    => TotalMl >= capacityMl - 0.01f;
-    public bool  HasLiquid => TotalMl > 0.01f;
+    // public bool  HasLiquid => TotalMl > 0.01f;
 
     // ---------- Adding liquid from bottles ----------
     public void AddFlavor(Flavor f, float ml)
