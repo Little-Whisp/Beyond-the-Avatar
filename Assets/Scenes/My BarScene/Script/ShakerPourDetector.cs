@@ -20,7 +20,7 @@ public class ShakerPourDetector : MonoBehaviour
 
     [Header("Rules")]
     public bool requireSealedLid = true;
-    public bool requireUncapped  = true;   // CHANGED: default true so cap actually gates pouring
+    public bool requireUncapped  = true;  
     public bool requireMixed     = true;
 
     bool isPouring;
