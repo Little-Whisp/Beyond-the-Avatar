@@ -9,13 +9,14 @@ public class GlassResultReceiver : MonoBehaviour
     public AudioSource sfx;
 
     [Header("Book & Tuning")]
-    public CocktailBook cocktailBook;   // assign your asset here
+    public CocktailBook cocktailBook;
     [Range(1f, 6f)] public float sharpness = 3f;
 
-    // mix that entered THIS glass
+    [Header("Spawn Decorator")]
+    public SpawnDecorator decorator; // assign in Inspector
+
     float mlOld, mlLife, mlImp;
 
-    // Called by PourStream when pouring from the shaker
     public void Receive(ShakerContainer shaker, float ml)
     {
         if (!shaker || ml <= 0f) return;
@@ -27,45 +28,38 @@ public class GlassResultReceiver : MonoBehaviour
 
     void Update()
     {
-        if (glass != null && glass.IsFull)
-        {
-            Serve();
-            // keep enabled for next rounds
-        }
+        if (glass != null && glass.IsFull) Serve();
     }
 
     void Serve()
     {
         float total = Mathf.Max(0.0001f, mlOld + mlLife + mlImp);
-        float co = mlOld  / total;
-        float cl = mlLife / total;
-        float ci = mlImp  / total;
+        float co = mlOld / total, cl = mlLife / total, ci = mlImp / total;
 
-        GameObject prefab = (cocktailBook != null)
-            ? cocktailBook.GetWeighted(co, cl, ci, sharpness)
-            : null;
-
-        if (prefab != null)
+        GameObject prefab = cocktailBook ? cocktailBook.GetWeighted(co, cl, ci, sharpness) : null;
+        if (prefab)
         {
-            Vector3 pos = (spawnPoint != null) ? spawnPoint.position : transform.position;
-            Quaternion rot = (spawnPoint != null) ? spawnPoint.rotation : Quaternion.identity;
-            Instantiate(prefab, pos, rot);
+            Vector3 pos = spawnPoint ? spawnPoint.position : transform.position;
+            Quaternion rot = spawnPoint ? spawnPoint.rotation : Quaternion.identity;
+
+            GameObject drink = Instantiate(prefab, pos, rot);
+
+            if (decorator) decorator.Decorate(drink); // <- single source of truth
         }
 
-        if (poofVfx != null)
+        if (poofVfx)
         {
-            Vector3 vfxPos = (spawnPoint != null) ? spawnPoint.position : transform.position;
+            Vector3 vfxPos = spawnPoint ? spawnPoint.position : transform.position;
             Instantiate(poofVfx, vfxPos, Quaternion.identity);
         }
+        if (sfx) sfx.Play();
 
-        if (sfx != null) sfx.Play();
-
-        // reset glass for next order
-        if (glass != null)
+        if (glass)
         {
             glass.currentMl = 0f;
             glass.RemoveLiquid(9999f);
         }
+
         mlOld = mlLife = mlImp = 0f;
     }
 }
