@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8abf380d9a4282541bd0824635c6be39, type: 3}
   m_Name: CocktailBook
   m_EditorClassIdentifier: Assembly-CSharp::CocktailBook
+  entries: []
   cocktailPrefabs:
   - {fileID: 8733371298844683389, guid: d5f35a87c3769de42b75be1e97766d3b, type: 3}
   - {fileID: 1424438562808058370, guid: 8f168541cf5ad994d8026fef7c7a186b, type: 3}
@@ -57,7 +58,7 @@ MonoBehaviour:
   - {fileID: 2974254351866080706, guid: 5ef9859611999ff4aa876aa7a2782767, type: 3}
   - {fileID: 6660311004829487300, guid: fbc47f0fbc1a66a4cb271c6a508db03e, type: 3}
   - {fileID: 4268999588787783089, guid: f73504be275a52d4b8507011400697d8, type: 3}
-  - {fileID: 1881879470038740094, guid: b82081581777316489fae1347f99a323, type: 3}
+  - {fileID: 475625090812357660, guid: 1fcb0f329b30ac94786eeecefc951344, type: 3}
   - {fileID: 2542582212612458528, guid: 61fbf77589ae2d74095656fa101b674d, type: 3}
   - {fileID: 2612282300597498133, guid: 38fe594f6bf251d4b8621e17aed2efbf, type: 3}
   - {fileID: 1729981759377052191, guid: 607a4cd2a1e930643a10ff524ba1b4e4, type: 3}
