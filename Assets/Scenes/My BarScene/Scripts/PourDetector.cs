@@ -13,8 +13,8 @@ public class PourDetector : MonoBehaviour
     [Header("Audio")]
     [Tooltip("AudioSource located at (or parented under) the bottle spout")]
     public AudioSource pourSource;               // loop source for continuous pour
-    public AudioClip pourStartSfx;               // optional 'glug' on start
-    public AudioClip pourEndSfx;                 // optional 'drip stop' on end
+    public AudioClip pourStartSfx;               // 'glug' on start
+    public AudioClip pourEndSfx;                 // 'drip stop' on end
     [Range(0f, 1f)] public float maxVolume = 0.8f;
     public float minPitch = 0.95f;
     public float maxPitch = 1.25f;

@@ -1,22 +1,22 @@
 using UnityEngine;
 using UnityEngine.UI;
-#if TMP_PRESENT
-using TMPro;
-#endif
+using TMPro; // <- always include
 
 public class StepCoachUI : MonoBehaviour
 {
     public ShakerContainer shaker;
     public GlassFill glass;
 
+    [Header("Dots")]
     public Image dotPour, dotMix, dotServe;
-    public float inactiveAlpha = 0.35f;
+    [Range(0f,1f)] public float inactiveAlpha = 0.35f;
+    public Color activeColor = Color.green;
+    public Color inactiveColor = Color.white;
 
-#if TMP_PRESENT
-    public TextMeshProUGUI hintText;
-    public TextMeshProUGUI resetTipText;
-#endif
-    public CanvasGroup hintGroup;
+    [Header("Text")]
+    public TextMeshProUGUI hintText;      // drag TextCanvas/HintText
+    public TextMeshProUGUI resetTipText;  // drag TextCanvas/ResetTipText
+    public CanvasGroup hintGroup;         // drag TextCanvas (CanvasGroup)
     public float fadeSpeed = 8f;
 
     enum Step { Pour, Mix, Serve }
@@ -65,7 +65,7 @@ public class StepCoachUI : MonoBehaviour
     void OnReset()
     {
         SetStep(Step.Pour, "Reset! Pour flavour");
-        Invoke(nameof(ClearResetFlash), 1.0f);
+        Invoke(nameof(ClearResetFlash), 1f);
     }
     void ClearResetFlash() => ShowHint("Pour flavour");
 
@@ -73,33 +73,38 @@ public class StepCoachUI : MonoBehaviour
     void SetStep(Step s, string hint) { step = s; SetDots(s); ShowHint(hint); }
     string DefaultHintFor(Step s) => s switch
     {
-        Step.Pour  => "Pour flavour",
-        Step.Mix   => "Seal & shake",
-        _          => "Uncap & pour"
+        Step.Pour => "Pour flavour",
+        Step.Mix  => "Seal & shake",
+        _         => "Uncap & pour"
     };
+
     void SetDots(Step active)
     {
         SetDot(dotPour,  active == Step.Pour);
         SetDot(dotMix,   active == Step.Mix);
         SetDot(dotServe, active == Step.Serve);
     }
+
     void SetDot(Image img, bool on)
     {
         if (!img) return;
-        var c = img.color; c.a = on ? 1f : inactiveAlpha; img.color = c;
-        img.transform.localScale = Vector3.Lerp(img.transform.localScale, on ? Vector3.one*1.1f : Vector3.one, 0.25f);
+        var off = new Color(inactiveColor.r, inactiveColor.g, inactiveColor.b, inactiveAlpha);
+        img.color = on ? activeColor : off;
+        img.transform.localScale = Vector3.Lerp(
+            img.transform.localScale,
+            on ? Vector3.one * 1.1f : Vector3.one,
+            0.25f
+        );
     }
+
     void ShowHint(string msg)
     {
-#if TMP_PRESENT
         if (hintText) hintText.text = msg;
-#endif
-        if (hintGroup) hintGroup.alpha = Mathf.MoveTowards(hintGroup.alpha, 1f, fadeSpeed*Time.deltaTime);
+        if (hintGroup) hintGroup.alpha = Mathf.MoveTowards(hintGroup.alpha, 1f, fadeSpeed * Time.deltaTime);
     }
+
     void SetResetTipVisible(bool on)
     {
-#if TMP_PRESENT
         if (resetTipText) resetTipText.text = on ? "Reset? Throw it away." : "";
-#endif
     }
 }
