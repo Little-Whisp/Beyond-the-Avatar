@@ -12,8 +12,6 @@ TagManager:
   - FxTemporaire
   - Floor
   - Bar
-  - MiniGameUI
-  - MiniGameBarrier
   layers:
   - Default
   - TransparentFX
