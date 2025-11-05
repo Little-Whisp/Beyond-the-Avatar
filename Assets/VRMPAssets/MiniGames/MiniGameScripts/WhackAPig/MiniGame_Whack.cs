@@ -22,50 +22,21 @@ namespace XRMultiplayer.MiniGames
         readonly Dictionary<XRBaseInteractable, Pose> m_InteractablePoses = new();
 
         /// <summary>
-        /// The networked gameplay component that handles spawning pigs and syncing over network.
+        /// The networked gameplay to use for handling the networked gameplay logic.
         /// </summary>
-        [SerializeField] NetworkedWhackAPig m_NetworkedGameplay;
+        NetworkedWhackAPig m_NetworkedGameplay;
 
         /// <summary>
         /// The current score of the mini-game.
         /// </summary>
         int m_CurrentScore = 0;
 
-        // 🔹 Added: ensures the reference is set before anything runs
-        void Awake()
-        {
-            ResolveNetworkedGameplayRef();
-        }
-
-        // 🔹 Added: tries multiple ways to find the NetworkedWhackAPig in scene
-        void ResolveNetworkedGameplayRef()
-        {
-            if (m_NetworkedGameplay) return;
-
-            TryGetComponent(out m_NetworkedGameplay);
-            if (!m_NetworkedGameplay)
-                m_NetworkedGameplay = GetComponentInChildren<NetworkedWhackAPig>(true);
-            if (!m_NetworkedGameplay)
-                m_NetworkedGameplay = GetComponentInParent<NetworkedWhackAPig>();
-            if (!m_NetworkedGameplay)
-                m_NetworkedGameplay = FindFirstObjectByType<NetworkedWhackAPig>(FindObjectsInactive.Include);
-        }
-
         /// <inheritdoc/>
         public override void Start()
         {
             base.Start();
 
-            // Ensure the NetworkedWhackAPig is assigned
-            ResolveNetworkedGameplayRef();
-
-            if (!m_NetworkedGameplay)
-            {
-                Debug.LogError("[WhackAPig] Missing NetworkedWhackAPig component. " +
-                               "Add it to the same object as MiniGame_Whack (or assign in the Inspector).", this);
-                enabled = false;
-                return;
-            }
+            TryGetComponent(out m_NetworkedGameplay);
 
             foreach (var interactable in m_GameInteractables)
             {
@@ -93,15 +64,6 @@ namespace XRMultiplayer.MiniGames
         {
             base.SetupGame();
             m_CurrentScore = 0;
-
-            // 🔹 Ensure reference before using it
-            ResolveNetworkedGameplayRef();
-            if (!m_NetworkedGameplay)
-            {
-                Debug.LogError("[WhackAPig] NetworkedWhackAPig is not assigned. Aborting SetupGame.", this);
-                return;
-            }
-
             m_NetworkedGameplay.ResetGame();
         }
 
@@ -111,15 +73,6 @@ namespace XRMultiplayer.MiniGames
         public override void StartGame()
         {
             base.StartGame();
-
-            // 🔹 Ensure reference before using it
-            ResolveNetworkedGameplayRef();
-            if (!m_NetworkedGameplay)
-            {
-                Debug.LogError("[WhackAPig] NetworkedWhackAPig is not assigned. Aborting StartGame.", this);
-                return;
-            }
-
             if (m_NetworkedGameplay.IsOwner)
             {
                 m_NetworkedGameplay.SpawnProcessServer();
@@ -133,10 +86,9 @@ namespace XRMultiplayer.MiniGames
         public override void FinishGame(bool submitScore = true)
         {
             base.FinishGame(submitScore);
-
-            if (m_NetworkedGameplay)
-                m_NetworkedGameplay.EndGame();
+            m_NetworkedGameplay.EndGame();
         }
+
 
         /// <summary>
         /// Called when the hammer is dropped on an interactable object.

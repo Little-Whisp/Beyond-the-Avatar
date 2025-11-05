@@ -22,57 +22,35 @@ public class ShakerMixController : MonoBehaviour
 
     float tail;
 
-    void Reset() 
-    {
-        rb = GetComponent<Rigidbody>();
-        container = GetComponent<ShakerContainer>(); 
-    }
-    
-      void OnDisable()
-    {
-        // Make sure audio/loop stops if object is disabled
-        if (container) container.AddMixEnergy(0f);
-        SetMixing(false);
-    }
+    void Reset(){ rb = GetComponent<Rigidbody>(); container = GetComponent<ShakerContainer>(); }
 
     void FixedUpdate()
     {
         if (!rb || !container) return;
 
         // Only allowed to mix when sealed + capped
-        if (!container.CanMix)
-        {
-            container.AddMixEnergy(0f);  
-            SetMixing(false);
-            return;
-        }
+        if (!container.CanMix) { SetMixing(false); return; }
 
         IsShaking = rb.linearVelocity.magnitude > linearSpeed ||
                     rb.angularVelocity.magnitude > angularSpeed;
 
-        if (IsShaking) tail = sustain;
-        else tail = Mathf.Max(0f, tail - Time.fixedDeltaTime);
+        if (IsShaking) tail = sustain; else tail = Mathf.Max(0f, tail - Time.fixedDeltaTime);
 
-        bool willMix = tail > 0f && !container.mixed && container.HasLiquid;
+        bool willMix = tail > 0f;
         SetMixing(willMix);
 
-         if (willMix)
+        if (IsMixing && container.HasLiquid)
         {
-            // Feed energy while mixing
+            // Add some mix energy based on how hard we’re moving
             float energy = rb.linearVelocity.magnitude * energyPerMeter * Time.fixedDeltaTime;
             container.AddMixEnergy(energy);
         }
-        else
-        {
-            // Tell container “not shaking” this frame -> ensures loop stops
-            container.AddMixEnergy(0f);
-        }
     }
+
     void SetMixing(bool v)
     {
         if (IsMixing == v) return;
         IsMixing = v;
-        if (IsMixing) onMixStart?.Invoke();
-        else onMixStop?.Invoke();
+        if (IsMixing) onMixStart?.Invoke(); else onMixStop?.Invoke();
     }
 }

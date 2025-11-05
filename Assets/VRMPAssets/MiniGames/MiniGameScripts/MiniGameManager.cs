@@ -32,9 +32,7 @@ namespace XRMultiplayer.MiniGames
         /// <summary>
         /// Keeps track of the current game state synchronized across the network
         /// </summary>
-        // (already OK — initialized inline)
-        readonly NetworkVariable<GameState> networkedGameState =
-            new(GameState.PreGame, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+        readonly NetworkVariable<GameState> networkedGameState = new(GameState.PreGame, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
         /// <summary>
         /// Dictionary of players and their assigned scoreboard slots
@@ -93,21 +91,9 @@ namespace XRMultiplayer.MiniGames
         [SerializeField] Renderer m_BarrierRend;
 
         readonly List<ScoreboardSlot> m_ScoreboardSlots = new();
-
-        // ----------------------------
-        // ✅ Network lists initialized INLINE (required by NGO)
-        //    Readable by Everyone, writable by Server (host).
-        // ----------------------------
-        public NetworkList<ulong> m_CurrentPlayers =
-    new NetworkList<ulong>(new List<ulong>(), NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-
-        public NetworkList<ulong> m_QueuedUpPlayers =
-            new NetworkList<ulong>(new List<ulong>(), NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-
-        // (already OK — initialized inline)
-        readonly NetworkVariable<float> m_BestAllScore =
-            new(0.0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
-
+        NetworkList<ulong> m_CurrentPlayers;
+        NetworkList<ulong> m_QueuedUpPlayers;
+        readonly NetworkVariable<float> m_BestAllScore = new(0.0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
         TeleportationProvider m_LocalPlayerTeleportProvider;
 
         float m_CurrentTimer = 0.0f;
@@ -135,9 +121,8 @@ namespace XRMultiplayer.MiniGames
                 trigger.OnTriggerAction += TriggerReadyState;
             }
 
-            // ❌ REMOVED: m_QueuedUpPlayers = new NetworkList<ulong>();
-            // ❌ REMOVED: m_CurrentPlayers = new NetworkList<ulong>();
-            // These must be constructed at field declaration (done above).
+            m_QueuedUpPlayers = new NetworkList<ulong>();
+            m_CurrentPlayers = new NetworkList<ulong>();
 
             if (m_BarrierRend == null)
             {
@@ -188,11 +173,9 @@ namespace XRMultiplayer.MiniGames
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
-
             networkedGameState.OnValueChanged += GameStateValueChanged;
             m_BestAllScore.OnValueChanged += BestAllScoreChanged;
             m_CurrentPlayers.OnListChanged += UpdatePlayerList;
-
             UpdateBestScore(m_BestAllScore.Value, m_BestAllText);
 
             if (IsOwner)
@@ -212,16 +195,6 @@ namespace XRMultiplayer.MiniGames
         public override void OnNetworkDespawn()
         {
             base.OnNetworkDespawn();
-
-            // 🔒 Clean up subscriptions
-            networkedGameState.OnValueChanged -= GameStateValueChanged;
-            m_BestAllScore.OnValueChanged -= BestAllScoreChanged;
-            m_CurrentPlayers.OnListChanged -= UpdatePlayerList;
-
-            // 🧹 Dispose network lists (good hygiene)
-            m_CurrentPlayers?.Dispose();
-            m_QueuedUpPlayers?.Dispose();
-
             m_LocalPlayerInGame = false;
             currentPlayerDictionary.Clear();
             m_ScoreboardTransform.SetPositionAndRotation(m_ScoreboardStartPose.position, m_ScoreboardStartPose.rotation);
