@@ -2,59 +2,61 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
 
-public class SpawnSystem : MonoBehaviour
+public class SpawnSystem : NetworkBehaviour
 {
     public static SpawnSystem Instance { get; private set; }
 
     [Header("Assign in Inspector")]
-    public Transform hostSpawn;                 // Host spawn (bar)
-    public Transform nonHostSpawn;              // One point in front of the minigame
-    public List<Transform> miniGameSpawns = new();
+    public Transform hostSpawn;                 // Player 1 / Host
+    public List<Transform> miniGameSpawns = new(); // Players 2,3,4...
 
+    [Tooltip("If true, non-host spawns are random; otherwise round-robin.")]
     public bool useRandom = false;
-
-    [Header("Movement")]
-    public bool lockNonHostAtSpawn = false;
 
     private readonly Dictionary<ulong, int> _assigned = new();
     private readonly HashSet<int> _reserved = new();
     private int _nextIndex;
 
-    void Awake()
+    private void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
-    }
 
-    void OnEnable()
-    {
-        if (NetworkManager.Singleton != null)
+        // Optional safety: auto-find if list left empty
+        if (miniGameSpawns.Count == 0)
         {
-            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
-            NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
+            foreach (var sp in FindObjectsOfType<SpawnPoint>())
+                miniGameSpawns.Add(sp.transform);
         }
     }
 
-    void OnDisable()
+    public override void OnNetworkSpawn()
     {
-        if (NetworkManager.Singleton != null)
-        {
-            NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
-            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
-        }
+        if (!IsServer) return;
+        NetworkManager.OnClientConnectedCallback += OnClientConnected;
+        NetworkManager.OnClientDisconnectCallback += OnClientDisconnected;
     }
 
-  private void OnClientConnected(ulong clientId)
-{
-    // This must be server-only. No RPCs from here.
-    if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer)
-        return;
+    public override void OnNetworkDespawn()
+    {
+        if (!IsServer) return;
+        NetworkManager.OnClientConnectedCallback -= OnClientConnected;
+        NetworkManager.OnClientDisconnectCallback -= OnClientDisconnected;
+    }
 
-    // Reserve a spawn index so PlayerSpawnController gets a stable spot.
-    GetSpawnFor(clientId);
-}
-
+    private void OnClientConnected(ulong clientId)
+    {
+        var (pos, rot) = ReserveSpawn(clientId);
+        var playerObj = NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject;
+        if (playerObj != null && playerObj.TryGetComponent<PlayerSpawnController>(out var psc))
+        {
+            psc.ApplySpawnClientRpc(pos, rot, new ClientRpcParams
+            {
+                Send = new ClientRpcSendParams { TargetClientIds = new[] { clientId } }
+            });
+        }
+    }
 
     private void OnClientDisconnected(ulong clientId)
     {
@@ -65,24 +67,20 @@ public class SpawnSystem : MonoBehaviour
         }
     }
 
-    // >>> Make this public so PlayerSpawnController can call it too if needed
-    public (Vector3 pos, Quaternion rot) GetSpawnFor(ulong clientId)
+    public (Vector3 pos, Quaternion rot) ReserveSpawn(ulong clientId)
     {
-        var nm = NetworkManager.Singleton;
-        bool isServer = nm != null && nm.IsServer;
-
-        // Host -> bar
-        if (nm != null && clientId == nm.LocalClientId && isServer && hostSpawn != null)
+        // 1) Host / Player 1
+        if (NetworkManager.Singleton != null &&
+        clientId == NetworkManager.Singleton.LocalClientId &&
+        IsServer && hostSpawn != null)
+        {
             return (hostSpawn.position, hostSpawn.rotation);
+        }
+        // 2) Everyone else → mini-game pads
+        if (miniGameSpawns.Count == 0)
+            return (Vector3.zero, Quaternion.identity); // fallback
 
-        // Non-host -> single point (if assigned)
-        if (nonHostSpawn != null)
-            return (nonHostSpawn.position, nonHostSpawn.rotation);
-
-        // Otherwise, optional list logic
-        if (miniGameSpawns == null || miniGameSpawns.Count == 0)
-            return (Vector3.zero, Quaternion.identity);
-
+        // Already assigned?
         if (_assigned.TryGetValue(clientId, out var existing))
         {
             var t0 = miniGameSpawns[Mathf.Clamp(existing, 0, miniGameSpawns.Count - 1)];
@@ -114,8 +112,7 @@ public class SpawnSystem : MonoBehaviour
             }
         }
 
-        if (chosen < 0)
-            chosen = _nextIndex = (_nextIndex + 1) % miniGameSpawns.Count;
+        if (chosen < 0) chosen = _nextIndex = (_nextIndex + 1) % miniGameSpawns.Count; // reuse if all taken
 
         _reserved.Add(chosen);
         _assigned[clientId] = chosen;
