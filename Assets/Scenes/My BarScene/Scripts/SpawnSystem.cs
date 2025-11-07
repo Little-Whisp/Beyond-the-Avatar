@@ -7,7 +7,7 @@ public class SpawnSystem : NetworkBehaviour
     public static SpawnSystem Instance { get; private set; }
 
     [Header("Assign in Inspector")]
-    public Transform hostSpawn;                 // Player 1 / Host
+    public Transform hostSpawn;                    // Player 1 / Host
     public List<Transform> miniGameSpawns = new(); // Players 2,3,4...
 
     [Tooltip("If true, non-host spawns are random; otherwise round-robin.")]
@@ -23,11 +23,26 @@ public class SpawnSystem : NetworkBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // Optional safety: auto-find if list left empty
+        // Optional safety: auto-find if list left empty (uses tag instead of a custom type)
+        // Tag your client spawn pads with: "ClientSpawn"
         if (miniGameSpawns.Count == 0)
         {
-            foreach (var sp in FindObjectsOfType<SpawnPoint>())
-                miniGameSpawns.Add(sp.transform);
+            var tagged = GameObject.FindGameObjectsWithTag("ClientSpawn");
+            foreach (var go in tagged)
+            {
+                if (go != null) miniGameSpawns.Add(go.transform);
+            }
+        }
+
+        // Ensure host spawn is NOT in the client pool
+        if (hostSpawn != null)
+        {
+            miniGameSpawns.RemoveAll(t => t == null || t == hostSpawn);
+        }
+
+        if (miniGameSpawns.Count == 0)
+        {
+            Debug.LogError("[SpawnSystem] No mini-game spawn points found. Assign in Inspector or tag pads as 'ClientSpawn'.", this);
         }
     }
 
@@ -48,7 +63,11 @@ public class SpawnSystem : NetworkBehaviour
     private void OnClientConnected(ulong clientId)
     {
         var (pos, rot) = ReserveSpawn(clientId);
-        var playerObj = NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject;
+
+        if (!NetworkManager.Singleton.ConnectedClients.TryGetValue(clientId, out var client))
+            return;
+
+        var playerObj = client.PlayerObject;
         if (playerObj != null && playerObj.TryGetComponent<PlayerSpawnController>(out var psc))
         {
             psc.ApplySpawnClientRpc(pos, rot, new ClientRpcParams
@@ -62,20 +81,23 @@ public class SpawnSystem : NetworkBehaviour
     {
         if (_assigned.TryGetValue(clientId, out var idx))
         {
-            _reserved.Remove(idx);
+            if (idx >= 0) _reserved.Remove(idx); // ignore sentinel host value
             _assigned.Remove(clientId);
         }
     }
 
     public (Vector3 pos, Quaternion rot) ReserveSpawn(ulong clientId)
     {
-        // 1) Host / Player 1
+        // 1) Host / Server gets the dedicated hostSpawn
         if (NetworkManager.Singleton != null &&
-        clientId == NetworkManager.Singleton.LocalClientId &&
-        IsServer && hostSpawn != null)
+            IsServer &&
+            clientId == NetworkManager.ServerClientId &&
+            hostSpawn != null)
         {
+            _assigned[clientId] = -999; // sentinel marking host
             return (hostSpawn.position, hostSpawn.rotation);
         }
+
         // 2) Everyone else → mini-game pads
         if (miniGameSpawns.Count == 0)
             return (Vector3.zero, Quaternion.identity); // fallback
@@ -83,8 +105,12 @@ public class SpawnSystem : NetworkBehaviour
         // Already assigned?
         if (_assigned.TryGetValue(clientId, out var existing))
         {
-            var t0 = miniGameSpawns[Mathf.Clamp(existing, 0, miniGameSpawns.Count - 1)];
-            return (t0.position, t0.rotation);
+            if (existing >= 0)
+            {
+                var t0 = miniGameSpawns[Mathf.Clamp(existing, 0, miniGameSpawns.Count - 1)];
+                return (t0.position, t0.rotation);
+            }
+            // If it was -999 (host sentinel) but somehow we’re here, just use first client pad
         }
 
         int chosen = -1;
@@ -112,7 +138,11 @@ public class SpawnSystem : NetworkBehaviour
             }
         }
 
-        if (chosen < 0) chosen = _nextIndex = (_nextIndex + 1) % miniGameSpawns.Count; // reuse if all taken
+        if (chosen < 0)
+        {
+            // All taken → reuse round-robin
+            chosen = _nextIndex = (_nextIndex + 1) % miniGameSpawns.Count;
+        }
 
         _reserved.Add(chosen);
         _assigned[clientId] = chosen;
