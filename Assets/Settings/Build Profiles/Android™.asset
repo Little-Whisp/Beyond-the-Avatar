@@ -18,10 +18,11 @@ MonoBehaviour:
   m_PlatformId: b9b35072a6f44c2e863f17467ea3dc13
   m_PlatformBuildProfile:
     rid: 3071007938874442027
-  m_OverrideGlobalSceneList: 0
-  m_Scenes: []
-  m_ScriptingDefines:
-  - 
+  m_OverrideGlobalSceneList: 1
+  m_Scenes:
+  - m_enabled: 1
+    m_path: Assets/Scenes/My BarScene/Iteration 1.unity
+  m_ScriptingDefines: []
   m_PlayerSettingsYaml:
     m_Settings: []
   references:
@@ -48,7 +49,7 @@ MonoBehaviour:
         m_ExportAsGoogleAndroidProject: 0
         m_DebugSymbolLevel: 1
         m_DebugSymbolFormat: 5
-        m_CurrentDeploymentTargetId: 2G0YC1ZF840QZK
+        m_CurrentDeploymentTargetId: __builtin__target_default
         m_BuildType: 2
         m_LinkTimeOptimization: 0
         m_BuildAppBundle: 0
