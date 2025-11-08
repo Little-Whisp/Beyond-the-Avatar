@@ -68,12 +68,6 @@ namespace XRMultiplayer.MiniGames
         [SerializeField, Tooltip("Determines the offset of the canvas during the pre-game")] Vector3 m_PreGameOffset;
         [SerializeField] float m_ScoreboardLerpSpeed = 5.0f;
 
-        [Header("Barrier")]
-        [SerializeField] bool m_UseBarrier = true;
-        [SerializeField] float m_DistanceCheckTime = .5f;
-        [SerializeField] float m_BarrierRenderDistance = 30.0f;
-        [SerializeField] Renderer m_BarrierRend;
-
         readonly List<ScoreboardSlot> m_ScoreboardSlots = new();
 
         NetworkList<ulong> m_CurrentPlayers = new NetworkList<ulong>();
@@ -106,22 +100,6 @@ namespace XRMultiplayer.MiniGames
             foreach (var trigger in m_StartZoneTrigger)
             {
                 trigger.OnTriggerAction += TriggerReadyState;
-            }
-
-            if (m_BarrierRend == null)
-            {
-                m_UseBarrier = false;
-            }
-            else
-            {
-                if (m_UseBarrier)
-                {
-                    StartCoroutine(CheckBarrierRendererDistance());
-                }
-                else
-                {
-                    m_BarrierRend.enabled = false;
-                }
             }
 
             SetupPlayerSlots();
@@ -299,7 +277,6 @@ namespace XRMultiplayer.MiniGames
             {
                 ToggleShrink(false);
                 TeleportToArea(m_LeaveTeleportTransform);
-                m_BarrierRend.gameObject.SetActive(true);
                 m_ScoreboardTransform.SetPositionAndRotation(m_ScoreboardStartPose.position, m_ScoreboardStartPose.rotation);
             }
 
@@ -333,7 +310,25 @@ namespace XRMultiplayer.MiniGames
         void TriggerReadyState(Collider other, bool entered)
         {
             if (other.TryGetComponent(out CharacterController controller))
+            {
+                // If player enters the trigger and is not already in the game, auto-join
+                if (entered && !LocalPlayerInGame)
+                {
+                    AddLocalPlayer();
+                }
+                // Still call ready logic for multiplayer sync
                 TogglePlayerReadyRpc(XRINetworkPlayer.LocalPlayer.OwnerClientId, entered);
+
+                // If only one player is present and ready, start the game immediately
+                if (entered && LocalPlayerInGame && m_QueuedUpPlayers.Count == 1)
+                {
+                    // Directly start the game for single player
+                    if (IsOwner)
+                    {
+                        StartGameOwnerRpc();
+                    }
+                }
+            }
         }
 
         [Rpc(SendTo.Everyone)]
@@ -361,6 +356,16 @@ namespace XRMultiplayer.MiniGames
                     if (currentPlayerDictionary.ContainsKey(player) && currentPlayerDictionary[player].isReady)
                         readyCount++;
                 }
+            }
+
+            // If only one player is present and ready, start the game immediately
+            if (readyCount == 1 && m_QueuedUpPlayers.Count == 1)
+            {
+                if (LocalPlayerInGame && IsOwner)
+                {
+                    StartGameOwnerRpc();
+                }
+                return;
             }
 
             if (readyCount > 0 && readyCount < m_QueuedUpPlayers.Count)
@@ -505,7 +510,10 @@ namespace XRMultiplayer.MiniGames
                 {
                     m_LocalPlayerInGame = true;
                     m_TeleportZonesObject.SetActive(true);
-                    m_DynamicButton.UpdateButton(RemoveLocalPlayer, "Leave");
+                    // Hide or disable the button after joining
+                    m_DynamicButton.button.gameObject.SetActive(false);
+                    // Alternatively, if you want to just disable interaction:
+                    // m_DynamicButton.button.interactable = false;
 
                     TeleportRequest teleportRequest = new()
                     {
@@ -519,7 +527,6 @@ namespace XRMultiplayer.MiniGames
                     m_ScoreboardTransform.rotation = destination.rotation;
                     m_ScoreboardTransform.position = destination.position + (m_ScoreboardTransform.forward + m_PreGameOffset);
                     PlayerHudNotification.Instance.ShowText($"Joined {currentMiniGame.gameName}");
-                    m_BarrierRend.gameObject.SetActive(false);
                 }
 
                 if (currentPlayerDictionary.Count >= maxAllowedPlayers & !LocalPlayerInGame && networkedGameState.Value != GameState.PostGame)
@@ -578,7 +585,6 @@ namespace XRMultiplayer.MiniGames
                 PlayerHudNotification.Instance.ShowText($"Left {currentMiniGame.gameName}");
                 TeleportToArea(m_LeaveTeleportTransform);
                 m_ScoreboardTransform.SetPositionAndRotation(m_ScoreboardStartPose.position, m_ScoreboardStartPose.rotation);
-                m_BarrierRend.gameObject.SetActive(true);
             }
         }
 
@@ -657,16 +663,6 @@ namespace XRMultiplayer.MiniGames
             m_GameNameText.enabled = !toggle;
             m_VideoPlayerObject.SetActive(!toggle);
             m_TooltipObject.SetActive(!toggle);
-        }
-
-        IEnumerator CheckBarrierRendererDistance()
-        {
-            while (true)
-            {
-                yield return new WaitForSecondsRealtime(m_DistanceCheckTime);
-                if (m_UseBarrier)
-                    m_BarrierRend.enabled = Vector3.Distance(m_BarrierRend.transform.position, Camera.main.transform.position) < m_BarrierRenderDistance;
-            }
         }
 
         void UpdateScoreboardPosition()

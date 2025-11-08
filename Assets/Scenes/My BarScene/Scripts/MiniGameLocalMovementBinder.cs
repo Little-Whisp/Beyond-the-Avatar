@@ -7,11 +7,15 @@ using Unity.XR.CoreUtils;
 public class MiniGameLocalMovementBinder : MonoBehaviour
 {
     [Header("Assign in Inspector")]
-    public BoxCollider restrictedArea;
+    public BoxCollider lobbyArea;       // trigger box for lobby
+    public BoxCollider miniGameArea;    // trigger box for minigame
 
     [Header("Behavior")]
     [Tooltip("Also clamp the host? (OFF = clients only)")]
     public bool affectHost = false;
+
+    [Tooltip("Clamp Y too? Usually keep OFF so height isn't forced.")]
+    public bool clampY = false;
 
     XROrigin _origin;
     MiniGameJoinArea _limiter;
@@ -19,15 +23,20 @@ public class MiniGameLocalMovementBinder : MonoBehaviour
     bool _initialized;
     bool _shouldAffect;
 
+    enum ClampMode { Off, Lobby, MiniGame }
+    ClampMode _mode = ClampMode.Lobby; // default: clamp in lobby
+
     void Start()
     {
-        // Start as clamped (lobby / pre-minigame)
+        // safety: make areas triggers so they never push the capsule
+        if (lobbyArea)    lobbyArea.isTrigger = true;
+        if (miniGameArea) miniGameArea.isTrigger = true;
+
         StartCoroutine(InitWhenReady());
     }
 
     IEnumerator InitWhenReady()
     {
-        // Wait for Netcode + local player so we can decide host/client correctly.
         yield return new WaitUntil(() =>
             NetworkManager.Singleton &&
             (NetworkManager.Singleton.IsClient || NetworkManager.Singleton.IsServer) &&
@@ -41,7 +50,7 @@ public class MiniGameLocalMovementBinder : MonoBehaviour
         var nm = NetworkManager.Singleton;
         if (!nm) return;
 
-        // Don't run on dedicated server
+        // dedicated server: no clamp
         if (nm.IsServer && !nm.IsClient)
         {
             _initialized = true;
@@ -56,28 +65,52 @@ public class MiniGameLocalMovementBinder : MonoBehaviour
         _initialized  = true;
 
         if (!_shouldAffect) return;
+        if (!BindRig())     return;
 
-        if (!restrictedArea)
-        {
-            Debug.LogWarning("[MiniGameLocalMovementBinder] No restrictedArea assigned, clamping will be inactive.");
-            return;
-        }
-
-        if (!BindRig()) return;
-
-        // Clamp ON by default
-        _limiter.SetArea(restrictedArea.bounds.center, restrictedArea.bounds.size);
-        _limiter.enabled = true;
+        ApplyClamp(); // start in lobby
     }
 
     void Update()
     {
         if (!_initialized || !_shouldAffect) return;
-        if (!restrictedArea) return;
         if (!BindRig()) return;
 
-        // Keep bounds fresh if the box moves/scales
-        _limiter.SetArea(restrictedArea.bounds.center, restrictedArea.bounds.size);
+        // keep limits synced if boxes move/scale
+        ApplyClamp(updateOnly: true);
+    }
+
+    void ApplyClamp(bool updateOnly = false)
+    {
+        if (_limiter == null) return;
+
+        BoxCollider area = null;
+        switch (_mode)
+        {
+            case ClampMode.Lobby:    area = lobbyArea;    break;
+            case ClampMode.MiniGame: area = miniGameArea; break;
+            case ClampMode.Off:      area = null;         break;
+        }
+
+        if (area == null)
+        {
+            _limiter.enabled = false;
+            return;
+        }
+
+        // XZ clamp by default; keep Y free unless asked
+        Vector3 center = area.bounds.center;
+        Vector3 size   = area.bounds.size;
+
+        if (!clampY)
+        {
+            if (_origin == null) BindRig();
+            float y = _origin ? _origin.transform.position.y : center.y;
+            center.y = y;
+            size.y   = 1000f; // effectively no Y clamp
+        }
+
+        _limiter.SetArea(center, size);
+        if (!updateOnly) _limiter.enabled = true;
     }
 
     bool BindRig()
@@ -85,9 +118,9 @@ public class MiniGameLocalMovementBinder : MonoBehaviour
         if (_origin == null)
         {
 #if UNITY_2023_1_OR_NEWER
-            _origin = UnityEngine.Object.FindFirstObjectByType<XROrigin>(FindObjectsInactive.Include);
+            _origin = Object.FindFirstObjectByType<XROrigin>(FindObjectsInactive.Include);
 #else
-            _origin = UnityEngine.Object.FindObjectOfType<XROrigin>(true);
+            _origin = Object.FindObjectOfType<XROrigin>(true);
 #endif
         }
         if (_origin == null) return false;
@@ -101,26 +134,30 @@ public class MiniGameLocalMovementBinder : MonoBehaviour
         return true;
     }
 
-    // === Public controls you can hook directly from UI buttons ===
-
-    [ContextMenu("Disable Clamp (Join MiniGame)")]
-    public void DisableClampForLocalPlayer()
+    // ---- Manual controls you can call from your flow/UI ----
+    [ContextMenu("Enable Lobby Clamp")]
+    public void EnableLobbyClamp()
     {
-        if (_limiter)
-        {
-            _limiter.enabled = false;
-            Debug.Log("[MiniGameLocalMovementBinder] Clamp disabled for local player (joined mini-game).");
-        }
+        _mode = ClampMode.Lobby;
+        if (_shouldAffect && BindRig()) ApplyClamp(updateOnly:false);
     }
 
-    [ContextMenu("Enable Clamp (Return to Lobby)")]
-    public void EnableClampForLocalPlayer()
+    [ContextMenu("Enable MiniGame Clamp")]
+    public void EnableMiniGameClamp()
     {
-        if (!BindRig()) return;
-        if (!restrictedArea) return;
+        _mode = ClampMode.MiniGame;
+        if (_shouldAffect && BindRig()) ApplyClamp(updateOnly:false);
+    }
 
-        _limiter.SetArea(restrictedArea.bounds.center, restrictedArea.bounds.size);
-        _limiter.enabled = true;
-        Debug.Log("[MiniGameLocalMovementBinder] Clamp enabled for local player (returned to lobby).");
+    [ContextMenu("Disable Clamp")]
+    public void DisableClamp()
+    {
+        _mode = ClampMode.Off;
+        if (_limiter) _limiter.enabled = false;
+    }
+
+    void OnDisable()
+    {
+        if (_limiter) _limiter.enabled = false;
     }
 }

@@ -54,35 +54,6 @@ public class PlayerSpawnController : NetworkBehaviour
             // Fallback: move this object if no XR Origin found
             transform.SetPositionAndRotation(pos, rot);
         }
-
-        // SetMovementLocked(lockMovement);
     }
 
-
-    // public void SetMovementLocked(bool locked)
-    // {
-    //     // Existing behaviour on the network avatar
-    //     if (_teleports != null)
-    //         foreach (var t in _teleports) if (t) t.enabled = !locked;
-
-    //     if (_moveProviders != null)
-    //         foreach (var m in _moveProviders) if (m) m.enabled = !locked;
-
-    //     var snapTurns = GetComponentsInChildren<ActionBasedSnapTurnProvider>(true);
-    //     foreach (var s in snapTurns) if (s) s.enabled = !locked;
-
-    //     // Also try on the local XR Origin (common in XR projects)
-    //     var sceneOrigin = _origin != null ? _origin : FindObjectOfType<XROrigin>(true);
-    //     if (sceneOrigin != null)
-    //     {
-    //         foreach (var t in sceneOrigin.GetComponentsInChildren<UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation.TeleportationProvider>(true))
-    //             if (t) t.enabled = !locked;
-
-    //         foreach (var m in sceneOrigin.GetComponentsInChildren<ActionBasedContinuousMoveProvider>(true))
-    //             if (m) m.enabled = !locked;
-
-    //         foreach (var s in sceneOrigin.GetComponentsInChildren<ActionBasedSnapTurnProvider>(true))
-    //             if (s) s.enabled = !locked;
-    //     }
-    // }
 }
