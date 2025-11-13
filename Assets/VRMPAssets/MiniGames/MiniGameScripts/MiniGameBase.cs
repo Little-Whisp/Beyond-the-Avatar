@@ -77,6 +77,10 @@ namespace XRMultiplayer.MiniGames
         /// </summary>
         bool m_GameEndingNotificationSent = false;
 
+        [Header("Timer Settings")]
+        [SerializeField] protected bool m_UseGameTimer = true;
+        [SerializeField] protected bool m_EndGameWhenTimerRunsOut = true;
+
         ///<inheritdoc/>
         public virtual void Start()
         {
@@ -111,6 +115,10 @@ namespace XRMultiplayer.MiniGames
         /// <param name="deltaTime">The time since the last frame.</param>
         public virtual void UpdateGame(float deltaTime)
         {
+            // If timer is disabled, do nothing
+            if (!m_UseGameTimer)
+                return;
+
             m_CurrentTimer -= deltaTime;
             if (m_GameType == GameType.Score)
             {
@@ -121,6 +129,10 @@ namespace XRMultiplayer.MiniGames
 
         protected void CheckForGameEnd()
         {
+            // If timer is disabled or timer should not end the game, do nothing
+            if (!m_UseGameTimer || !m_EndGameWhenTimerRunsOut)
+                return;
+
             if (m_CurrentTimer <= 3.5f & !m_GameEndingNotificationSent)
             {
                 m_GameEndingNotificationSent = true;
@@ -160,7 +172,10 @@ namespace XRMultiplayer.MiniGames
                 PlayerHudNotification.Instance.ShowText($"Game Complete!");
             }
 
-            if (m_MiniGameManager.IsOwner && m_MiniGameManager.currentNetworkedGameState == MiniGameManager.GameState.InGame)
+            // Only end the game if timer is set to end the game
+            if (m_MiniGameManager.IsOwner
+                && m_MiniGameManager.currentNetworkedGameState == MiniGameManager.GameState.InGame
+                && m_EndGameWhenTimerRunsOut)
                 m_MiniGameManager.StopGameOwnerRpc();
         }
 

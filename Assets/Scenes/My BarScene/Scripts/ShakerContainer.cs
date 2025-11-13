@@ -32,6 +32,14 @@ public class ShakerContainer : MonoBehaviour
     public AudioSource audioSource;
     [Tooltip("Sound to play once when shaker becomes full.")]
     public AudioClip fullSound;
+    [Tooltip("Sound to play once when mixing is completed.")]
+    public AudioClip mixDoneSound;
+    bool mixDoneSoundPlayed;
+
+    [Header("UI Reset")]
+    [Tooltip("Delay after mixing is done before the UI is cleared.")]
+    public float uiResetDelay = 1.0f;
+    Coroutine uiResetCo;
 
     // volumes (ml)
     public float mlOld, mlLife, mlImp;
@@ -45,6 +53,7 @@ public class ShakerContainer : MonoBehaviour
 
     void Awake()
     {
+        if (!audioSource) audioSource = GetComponent<AudioSource>();
         if (liquidRenderer) mat = liquidRenderer.material;
         fillID = Shader.PropertyToID(string.IsNullOrWhiteSpace(fillProp) ? "_FillAmount" : fillProp);
         colorID = Shader.PropertyToID(string.IsNullOrWhiteSpace(colorProp) ? "_BaseColor" : colorProp);
@@ -76,6 +85,7 @@ public class ShakerContainer : MonoBehaviour
         // New ingredient → must remix
         mixed = false;
         mixProgress = 0f;
+        mixDoneSoundPlayed = false;
 
         ApplyVisuals();
         hud?.SetValues(mlOld, mlLife, mlImp, capacityMl);
@@ -95,10 +105,28 @@ public class ShakerContainer : MonoBehaviour
 
         mixProgress += Mathf.Max(0f, amount);
         float p = Mathf.Clamp01(mixProgress / Mathf.Max(0.0001f, mixNeeded));
-        if (p >= 1f) mixed = true;
+        if (p >= 1f)
+        {
+            mixed = true;
+            // Play mix done sound once
+            if (!mixDoneSoundPlayed && audioSource && mixDoneSound)
+            {
+                audioSource.PlayOneShot(mixDoneSound);
+                mixDoneSoundPlayed = true;
+            }
+            // Start / restart UI reset coroutine
+            if (uiResetCo != null) StopCoroutine(uiResetCo);
+            uiResetCo = StartCoroutine(ResetUiAfterDelay());
+        }
 
         hud?.SetMixed(mixed, p);
         ApplyVisuals();
+    }
+
+    System.Collections.IEnumerator ResetUiAfterDelay()
+    {
+        yield return new WaitForSeconds(uiResetDelay);
+        hud?.SetMixed(false, 0f); // hides / clears the mix UI
     }
 
     // ---------- Drain when pouring ----------
@@ -155,6 +183,12 @@ public class ShakerContainer : MonoBehaviour
     {
         mlOld = mlLife = mlImp = 0f;
         mixed = false; mixProgress = 0f;
+        mixDoneSoundPlayed = false;
+        if (uiResetCo != null)
+        {
+            StopCoroutine(uiResetCo);
+            uiResetCo = null;
+        }
         ApplyVisuals();
         hud?.SetValues(0, 0, 0, capacityMl);
         hud?.SetMixed(false, 0);

@@ -119,6 +119,14 @@ public class ShakeSound : MonoBehaviour
             return;
         }
 
+        // ✅ NEW: stop loop if mixing is done
+        if (shaker.mixed)
+        {
+            ResetFrame();
+            StopLoop(false);
+            return;
+        }
+
         Vector3 pos = transform.position;
         Quaternion rot = transform.rotation;
 
