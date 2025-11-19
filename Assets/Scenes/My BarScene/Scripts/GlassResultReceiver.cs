@@ -36,6 +36,11 @@ public class GlassResultReceiver : MonoBehaviour
         float total = Mathf.Max(0.0001f, mlOld + mlLife + mlImp);
         float co = mlOld / total, cl = mlLife / total, ci = mlImp / total;
 
+        Serve(co, cl, ci);
+    }
+
+    void Serve(float co, float cl, float ci)
+    {
         GameObject prefab = cocktailBook ? cocktailBook.GetWeighted(co, cl, ci, sharpness) : null;
         if (prefab)
         {
@@ -43,6 +48,25 @@ public class GlassResultReceiver : MonoBehaviour
             Quaternion rot = spawnPoint ? spawnPoint.rotation : Quaternion.identity;
 
             GameObject drink = Instantiate(prefab, pos, rot);
+            Debug.Log("[GlassResultReceiver] Spawned drink: " + drink.name);
+
+            // Tag as "Cocktail" so TriggerZone can detect it
+            drink.tag = "Cocktail";
+
+            // Find XRGrabInteractable anywhere in the spawned prefab
+            var grab = drink.GetComponentInChildren<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
+            if (grab != null)
+            {
+                if (grab.gameObject.GetComponent<GlassPickup>() == null)
+                {
+                    grab.gameObject.AddComponent<GlassPickup>();
+                    Debug.Log("[GlassResultReceiver] Added GlassPickup to " + grab.gameObject.name);
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[GlassResultReceiver] Spawned drink has no XRGrabInteractable: " + drink.name);
+            }
 
             if (decorator) decorator.Decorate(drink); // <- single source of truth
         }

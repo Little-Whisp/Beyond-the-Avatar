@@ -21,6 +21,19 @@ public class CocktailBook : ScriptableObject
     // Legacy random list (fallback if entries is empty)
     public List<GameObject> cocktailPrefabs = new List<GameObject>();
 
+    // ⭐ NEW: return the whole entry, not just the prefab
+    public Entry GetRandomEntry()
+    {
+        if (entries != null && entries.Count > 0)
+        {
+            int index = Random.Range(0, entries.Count);
+            return entries[index];
+        }
+
+        return null;
+    }
+
+    // Old method: returns only the prefab
     public GameObject GetRandom()
     {
         if (entries != null && entries.Count > 0)

@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69237ad33f154ef49b1c0055ecccd92d, type: 3}
+  m_Name: PromptBar
+  m_EditorClassIdentifier: 
+  agencyPrompts:
+  - Give this nice drink to someone who would be a good mediator in a bar argument.
+  - "Give this nice drink to someone you\u2019d ask to play a game of chess with
+    you."
+  - Give this nice drink to someone who would be great at organizing a surprise party.
+  - "Give this nice drink to someone who always seems to know when it\u2019s time
+    to go home."
+  - "Give this nice drink to someone who\u2019d be good at solving a puzzle."
+  - "Give this nice drink to someone you\u2019d trust to fairly split the bill."
+  experiencePrompts:
+  - Give this nice drink to someone who truly enjoys a fun night out.
+  - Give this nice drink to someone who would be the saddest when the night is over.
+  - Give this nice drink to someone who longs for a comforting arm around them.
+  - Give this nice drink to someone who would enjoy a spontaneous moment on the dance
+    floor.
+  - Give this nice drink to someone who could hang around for hours, just for the
+    vibe.
+  - Give this nasty drink to someone who gets angry the fastest when someone bumps
+    into them.
+  prosocialPrompts:
+  - "Give this nice drink to someone you\u2019d save first if the bar were on fire."
+  - "Give this nice drink to someone you\u2019d talk to first."
+  - "Give this nice drink to someone you\u2019d like to make happy with a free snack
+    platter."
+  antisocialPrompts:
+  - "Give this nasty drink to someone you\u2019d ask to leave the bar first."
+  - "Give this nasty drink to someone you\u2019d insult first if you were having
+    a bad day."
+  - "Give this nasty drink to someone you\u2019d blame first for making a mess in
+    the bar."

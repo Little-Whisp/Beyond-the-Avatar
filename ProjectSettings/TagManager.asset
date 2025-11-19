@@ -12,6 +12,7 @@ TagManager:
   - FxTemporaire
   - Floor
   - Bar
+  - Cocktail
   layers:
   - Default
   - TransparentFX
