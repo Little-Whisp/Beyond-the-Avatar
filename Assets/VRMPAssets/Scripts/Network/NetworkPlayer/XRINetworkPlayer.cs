@@ -166,6 +166,23 @@ namespace XRMultiplayer
         /// </summary>
         protected Vector3 m_PrevHeadPos;
 
+        // Networked player number:
+        // 0 = host's own player object
+        // 1 = first non-host client (bartender)
+        // 2 = second client
+        // 3 = third client, etc.
+        public NetworkVariable<int> PlayerNumber =
+            new NetworkVariable<int>(
+                -1,
+                NetworkVariableReadPermission.Everyone,
+                NetworkVariableWritePermission.Server);
+
+        // Server-side static counter for non-host clients
+        static int s_NextClientNumber = 1;
+
+        // Convenience: Player 1 is the bartender
+        public bool IsBartender => PlayerNumber.Value == 1;
+
         protected void Awake()
         {
             m_VoiceChat = FindFirstObjectByType<VoiceChatManager>();
@@ -229,27 +246,41 @@ namespace XRMultiplayer
         {
             base.OnDestroy();
 
+            // NEW: clean up the event
+            PlayerNumber.OnValueChanged -= OnPlayerNumberChanged;
+
             if (IsOwner)
             {
-                // Local Name unsubscribe.
                 XRINetworkGameManager.LocalPlayerName.Unsubscribe(UpdateLocalPlayerName);
                 XRINetworkGameManager.LocalPlayerColor.Unsubscribe(UpdateLocalPlayerColor);
                 m_VoiceChat.selfMuted.Unsubscribe(SelfMutedChanged);
             }
             else if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsConnectedClient)
             {
-                // Inform Network Manager that player left current session.
                 XRINetworkGameManager.Instance.PlayerLeft(NetworkObject.OwnerClientId);
             }
 
-            // Unsubscribe from color updating.
             m_PlayerColor.OnValueChanged -= UpdatePlayerColor;
         }
+        
+
 
         ///<inheritdoc/>
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
+
+            if (IsServer)
+            {
+                // Distributed authority OR regular host mode
+                PlayerNumber.Value = s_NextClientNumber++;
+            }
+
+            
+
+            PlayerNumber.OnValueChanged += OnPlayerNumberChanged;
+            OnPlayerNumberChanged(-1, PlayerNumber.Value);
+
             if (IsLocalPlayer)
             {
                 // Set Local Player.
@@ -279,6 +310,7 @@ namespace XRMultiplayer
         public override void OnNetworkDespawn()
         {
             base.OnNetworkDespawn();
+            PlayerNumber.OnValueChanged -= OnPlayerNumberChanged;
             PlayerHudNotification.Instance.ShowText($"<b>{m_PlayerName.Value}</b> left");
             onDisconnected?.Invoke(this);
         }
@@ -456,6 +488,32 @@ namespace XRMultiplayer
                 else
                     m_VivoxParticipant.UnmutePlayerLocally();
             }
+        }
+
+        void OnPlayerNumberChanged(int oldValue, int newValue)
+        {
+            Debug.Log($"Player {OwnerClientId} is number {newValue}");
+            if (newValue == 1)
+            {
+                SetupBartenderRole();
+            }
+            else if (newValue > 1)
+            {
+                SetupCustomerRole(newValue);
+            }
+            // if (newValue == 0) { /* host logic if needed */ }
+        }
+
+        private void SetupBartenderRole()
+        {
+            Debug.Log($"Player {OwnerClientId} is the bartender.");
+            // TODO: Enable bartender objects, UI, etc.
+        }
+
+        private void SetupCustomerRole(int customerNumber)
+        {
+            Debug.Log($"Player {OwnerClientId} is customer {customerNumber}.");
+            // TODO: Enable customer objects, UI, etc.
         }
     }
 }

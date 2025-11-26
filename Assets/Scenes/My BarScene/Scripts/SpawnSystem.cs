@@ -7,14 +7,14 @@ public class SpawnSystem : MonoBehaviour
     public static SpawnSystem Instance { get; private set; }
 
     [Header("Assign in Inspector")]
-    public Transform hostSpawn;                 // Host spawn (bar)
-    public Transform nonHostSpawn;              // One point in front of the minigame
+    public Transform bartenderSpawn;   // PlayerNumber == 1
+    public Transform customerSpawn;    // PlayerNumber >= 2
     public List<Transform> miniGameSpawns = new();
 
     public bool useRandom = false;
 
     [Header("Movement")]
-    public bool lockNonHostAtSpawn = false;
+    public bool lockNonBartenderAtSpawn = false;
 
     private readonly Dictionary<ulong, int> _assigned = new();
     private readonly HashSet<int> _reserved = new();
@@ -22,64 +22,38 @@ public class SpawnSystem : MonoBehaviour
 
     void Awake()
     {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
         Instance = this;
         DontDestroyOnLoad(gameObject);
     }
 
-    void OnEnable()
-    {
-        if (NetworkManager.Singleton != null)
-        {
-            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
-            NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
-        }
-    }
-
-    void OnDisable()
-    {
-        if (NetworkManager.Singleton != null)
-        {
-            NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
-            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
-        }
-    }
-
-  private void OnClientConnected(ulong clientId)
-{
-    // This must be server-only. No RPCs from here.
-    if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer)
-        return;
-
-    // Reserve a spawn index so PlayerSpawnController gets a stable spot.
-    GetSpawnFor(clientId);
-}
-
-
-    private void OnClientDisconnected(ulong clientId)
-    {
-        if (_assigned.TryGetValue(clientId, out var idx))
-        {
-            _reserved.Remove(idx);
-            _assigned.Remove(clientId);
-        }
-    }
-
-    // >>> Make this public so PlayerSpawnController can call it too if needed
     public (Vector3 pos, Quaternion rot) GetSpawnFor(ulong clientId)
     {
-        var nm = NetworkManager.Singleton;
-        bool isServer = nm != null && nm.IsServer;
+        var playerObj = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(clientId);
 
-        // Host -> bar
-        if (nm != null && clientId == nm.LocalClientId && isServer && hostSpawn != null)
-            return (hostSpawn.position, hostSpawn.rotation);
+        if (playerObj != null)
+        {
+            var xrPlayer = playerObj.GetComponent<XRMultiplayer.XRINetworkPlayer>();
 
-        // Non-host -> single point (if assigned)
-        if (nonHostSpawn != null)
-            return (nonHostSpawn.position, nonHostSpawn.rotation);
+            if (xrPlayer != null)
+            {
+                int number = xrPlayer.PlayerNumber.Value;
 
-        // Otherwise, optional list logic
+                // Bartender (PlayerNumber == 1)
+                if (number == 1 && bartenderSpawn != null)
+                    return (bartenderSpawn.position, bartenderSpawn.rotation);
+
+                // Customers (PlayerNumber >= 2)
+                if (number >= 2 && customerSpawn != null)
+                    return (customerSpawn.position, customerSpawn.rotation);
+            }
+        }
+
+        // Fallback to miniGameSpawns
         if (miniGameSpawns == null || miniGameSpawns.Count == 0)
             return (Vector3.zero, Quaternion.identity);
 
@@ -96,7 +70,11 @@ public class SpawnSystem : MonoBehaviour
             for (int tries = 0; tries < 8; tries++)
             {
                 int r = Random.Range(0, miniGameSpawns.Count);
-                if (!_reserved.Contains(r)) { chosen = r; break; }
+                if (!_reserved.Contains(r))
+                {
+                    chosen = r;
+                    break;
+                }
             }
         }
 

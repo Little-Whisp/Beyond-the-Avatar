@@ -2,6 +2,7 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using Unity.XR.CoreUtils;
+using XRMultiplayer; // <-- important so we can access XRINetworkPlayer
 
 public class PlayerSpawnController : NetworkBehaviour
 {
@@ -21,12 +22,22 @@ public class PlayerSpawnController : NetworkBehaviour
         if (!IsServer) return;
 
         var ss = SpawnSystem.Instance;
-        if (ss == null) { Debug.LogWarning("[PlayerSpawnController] No SpawnSystem.Instance found."); return; }
+        if (ss == null)
+        {
+            Debug.LogWarning("[PlayerSpawnController] No SpawnSystem.Instance found.");
+            return;
+        }
 
         var (pos, rot) = ss.GetSpawnFor(OwnerClientId);
 
-        bool isHostOwner = IsServer && OwnerClientId == NetworkManager.Singleton.LocalClientId;
-        bool lockMovement = ss.lockNonHostAtSpawn && !isHostOwner;
+        // Get XRINetworkPlayer to check PlayerNumber
+        var playerObj = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(OwnerClientId);
+        var xrPlayer = playerObj != null ? playerObj.GetComponent<XRINetworkPlayer>() : null;
+
+        bool isBartender = xrPlayer != null && xrPlayer.PlayerNumber.Value == 1;
+
+        // Only bartender gets movement if lock enabled
+        bool lockMovement = ss.lockNonBartenderAtSpawn && !isBartender;
 
         transform.SetPositionAndRotation(pos, rot);
 
@@ -39,21 +50,29 @@ public class PlayerSpawnController : NetworkBehaviour
     [ClientRpc]
     public void ApplySpawnClientRpc(Vector3 pos, Quaternion rot, bool lockMovement, ClientRpcParams rpcParams = default)
     {
-        // Ensure we move the *local* XR rig (which is usually NOT a child of the network avatar)
         if (_origin == null)
-            _origin = FindObjectOfType<XROrigin>(true); // find the local rig in the scene
+            _origin = FindObjectOfType<XROrigin>(true);
 
         if (_origin != null)
         {
-            // XR-safe placement: fixes HMD offset issues
             _origin.MoveCameraToWorldLocation(pos);
             _origin.MatchOriginUpCameraForward(Vector3.up, rot * Vector3.forward);
         }
         else
         {
-            // Fallback: move this object if no XR Origin found
             transform.SetPositionAndRotation(pos, rot);
         }
-    }
 
+        if (_teleports == null || _teleports.Length == 0)
+            _teleports = GetComponentsInChildren<UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation.TeleportationProvider>(true);
+
+        if (_moveProviders == null || _moveProviders.Length == 0)
+            _moveProviders = GetComponentsInChildren<ActionBasedContinuousMoveProvider>(true);
+
+        foreach (var tp in _teleports)
+            if (tp != null) tp.enabled = !lockMovement;
+
+        foreach (var mp in _moveProviders)
+            if (mp != null) mp.enabled = !lockMovement;
+    }
 }
