@@ -33,29 +33,51 @@ public class SpawnSystem : MonoBehaviour
 
     public (Vector3 pos, Quaternion rot) GetSpawnFor(ulong clientId)
     {
-        var playerObj = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(clientId);
+        XRMultiplayer.XRINetworkPlayer xrPlayer = null;
 
-        if (playerObj != null)
+        // Find XRINetworkPlayer by iterating all spawned objects
+        foreach (var netObj in NetworkManager.Singleton.SpawnManager.SpawnedObjectsList)
         {
-            var xrPlayer = playerObj.GetComponent<XRMultiplayer.XRINetworkPlayer>();
-
-            if (xrPlayer != null)
+            var playerComp = netObj.GetComponent<XRMultiplayer.XRINetworkPlayer>();
+            if (playerComp != null && playerComp.OwnerClientId == clientId)
             {
-                int number = xrPlayer.PlayerNumber.Value;
-
-                // Bartender (PlayerNumber == 1)
-                if (number == 1 && bartenderSpawn != null)
-                    return (bartenderSpawn.position, bartenderSpawn.rotation);
-
-                // Customers (PlayerNumber >= 2)
-                if (number >= 2 && customerSpawn != null)
-                    return (customerSpawn.position, customerSpawn.rotation);
+                xrPlayer = playerComp;
+                break;
             }
+        }
+
+        if (xrPlayer == null)
+        {
+            Debug.LogWarning($"[SpawnSystem] No XRINetworkPlayer found for ClientId={clientId}. Fallback to customer spawn.");
+            if (customerSpawn != null)
+                return (customerSpawn.position, customerSpawn.rotation);
+            return (Vector3.zero, Quaternion.identity);
+        }
+
+        int number = xrPlayer.PlayerNumber.Value;
+
+        // Bartender (PlayerNumber == 1)
+        if (number == 1 && bartenderSpawn != null)
+        {
+            Debug.Log($"[SpawnSystem] Bartender spawn applied for ClientId={clientId}");
+            return (bartenderSpawn.position, bartenderSpawn.rotation);
+        }
+
+        // Customers (PlayerNumber >= 2)
+        if (number >= 2 && customerSpawn != null)
+        {
+            Debug.Log($"[SpawnSystem] Customer spawn applied for ClientId={clientId}");
+            return (customerSpawn.position, customerSpawn.rotation);
         }
 
         // Fallback to miniGameSpawns
         if (miniGameSpawns == null || miniGameSpawns.Count == 0)
+        {
+            Debug.LogWarning("[SpawnSystem] miniGameSpawns empty — fallback to customer spawn");
+            if (customerSpawn != null)
+                return (customerSpawn.position, customerSpawn.rotation);
             return (Vector3.zero, Quaternion.identity);
+        }
 
         if (_assigned.TryGetValue(clientId, out var existing))
         {

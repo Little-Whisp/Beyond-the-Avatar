@@ -12,8 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8abf380d9a4282541bd0824635c6be39, type: 3}
   m_Name: CocktailBook
   m_EditorClassIdentifier: Assembly-CSharp::CocktailBook
-  entries: []
+  entries:
+  - name: 
+    prefab: {fileID: 4753818950387710468, guid: 151f154f35ed9a043835f87dfc1d54c8,
+      type: 3}
+    targetOld: 0
+    targetLife: 0
+    targetImp: 0
+    baseWeight: 0
   cocktailPrefabs:
+  - {fileID: 7049471731764384000, guid: 88f5b1cd0815bc94a93a16bd33d9b018, type: 3}
   - {fileID: 8733371298844683389, guid: d5f35a87c3769de42b75be1e97766d3b, type: 3}
   - {fileID: 1424438562808058370, guid: 8f168541cf5ad994d8026fef7c7a186b, type: 3}
   - {fileID: 4753818950387710468, guid: 151f154f35ed9a043835f87dfc1d54c8, type: 3}
@@ -21,7 +29,6 @@ MonoBehaviour:
   - {fileID: 1345563952806047484, guid: b882838426de1d94b9b6379e4f2da5ba, type: 3}
   - {fileID: 4806787986319632929, guid: 26b4d0fc2f4ef3d4f9db793dfcf9e89e, type: 3}
   - {fileID: 4551228761534237826, guid: 71d6b3480d5ddff40914f4423376feef, type: 3}
-  - {fileID: 7049471731764384000, guid: 88f5b1cd0815bc94a93a16bd33d9b018, type: 3}
   - {fileID: 7814492310532479450, guid: 46b6313b9a604f64f8e0d155c2e9114e, type: 3}
   - {fileID: 7887183674209203160, guid: 2cf201b1fb7394b4d816637a6d9ffc62, type: 3}
   - {fileID: 7129097312749193558, guid: 60e22d5562a2bba40973b9baf03a1817, type: 3}
@@ -102,8 +109,8 @@ MonoBehaviour:
   - {fileID: 3412749744807934360, guid: e868b2989d76aaa48bd7fb9012e8c1e8, type: 3}
   - {fileID: 7550298429305172941, guid: 65ad3a88632107749af2ddb9135ce0e0, type: 3}
   - {fileID: 534551621635367261, guid: eda848a9628046948a546de0d70478d0, type: 3}
-  - {fileID: 4107051859023121341, guid: cd8b6dca8f638ff4081868694f1a42ce, type: 3}
   - {fileID: 1788998069550957254, guid: 1ff8c5c4483300445a997ee499b12125, type: 3}
+  - {fileID: 4107051859023121341, guid: cd8b6dca8f638ff4081868694f1a42ce, type: 3}
   - {fileID: 7253374548072314066, guid: d8c6355dadbf4834e8cf4fe8f32b08c7, type: 3}
   - {fileID: 6680730024502309714, guid: 7dced8be8f46c4a4a910b5a090bf23c7, type: 3}
   - {fileID: 3031499567917092250, guid: 47bd5648ea18f784f9d2e3234f01edf2, type: 3}

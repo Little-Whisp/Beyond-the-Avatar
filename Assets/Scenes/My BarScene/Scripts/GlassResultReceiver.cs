@@ -53,22 +53,42 @@ public class GlassResultReceiver : MonoBehaviour
             // Tag as "Cocktail" so TriggerZone can detect it
             drink.tag = "Cocktail";
 
-            // Find XRGrabInteractable anywhere in the spawned prefab
+            // 🔹 Find XRGrabInteractable anywhere in the spawned prefab
             var grab = drink.GetComponentInChildren<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
+
+            GlassPickup pickup = null;
+
             if (grab != null)
             {
-                if (grab.gameObject.GetComponent<GlassPickup>() == null)
+                // Put GlassPickup on the same GameObject as the grab component
+                pickup = grab.GetComponent<GlassPickup>();
+                if (pickup == null)
                 {
-                    grab.gameObject.AddComponent<GlassPickup>();
-                    Debug.Log("[GlassResultReceiver] Added GlassPickup to " + grab.gameObject.name);
+                    pickup = grab.gameObject.AddComponent<GlassPickup>();
+                    Debug.Log("[GlassResultReceiver] Added GlassPickup to grab object: " + grab.gameObject.name);
                 }
             }
             else
             {
                 Debug.LogWarning("[GlassResultReceiver] Spawned drink has no XRGrabInteractable: " + drink.name);
+
+                // Fallback: attach GlassPickup to the root
+                pickup = drink.GetComponent<GlassPickup>();
+                if (pickup == null)
+                {
+                    pickup = drink.AddComponent<GlassPickup>();
+                    Debug.Log("[GlassResultReceiver] Added GlassPickup to root drink: " + drink.name);
+                }
             }
 
-            if (decorator) decorator.Decorate(drink); // <- single source of truth
+            // 🔹 Assign trigger zones so highlights work
+            if (pickup != null)
+            {
+                pickup.triggerZones = FindObjectsOfType<TriggerZone>();
+            }
+
+            // Decorate drink (ice, garnish, etc.)
+            if (decorator) decorator.Decorate(drink);
         }
 
         if (poofVfx)

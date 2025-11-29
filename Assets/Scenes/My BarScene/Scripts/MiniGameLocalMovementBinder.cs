@@ -29,7 +29,7 @@ public class MiniGameLocalMovementBinder : MonoBehaviour
     void Start()
     {
         // safety: make areas triggers so they never push the capsule
-        if (lobbyArea)    lobbyArea.isTrigger = true;
+        if (lobbyArea) lobbyArea.isTrigger = true;
         if (miniGameArea) miniGameArea.isTrigger = true;
 
         StartCoroutine(InitWhenReady());
@@ -59,13 +59,25 @@ public class MiniGameLocalMovementBinder : MonoBehaviour
         }
 
         bool isClientOnly = nm.IsClient && !nm.IsServer;
-        bool isHost       = nm.IsClient &&  nm.IsServer;
+        bool isHost = nm.IsClient && nm.IsServer;
 
         _shouldAffect = isClientOnly || (isHost && affectHost);
-        _initialized  = true;
+        _initialized = true;
+
+        // Bartender check BEFORE any clamp logic
+        var xrPlayer = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject()
+                    .GetComponent<XRMultiplayer.XRINetworkPlayer>();
+
+        if (xrPlayer != null && xrPlayer.PlayerNumber.Value == 1)
+        {
+            // Bartender, do NOT clamp
+            _shouldAffect = false;
+            Debug.Log("[Binder] Bartender detected — clamp disabled.");
+            return;
+        }
 
         if (!_shouldAffect) return;
-        if (!BindRig())     return;
+        if (!BindRig()) return;
 
         ApplyClamp(); // start in lobby
     }
@@ -86,9 +98,9 @@ public class MiniGameLocalMovementBinder : MonoBehaviour
         BoxCollider area = null;
         switch (_mode)
         {
-            case ClampMode.Lobby:    area = lobbyArea;    break;
+            case ClampMode.Lobby: area = lobbyArea; break;
             case ClampMode.MiniGame: area = miniGameArea; break;
-            case ClampMode.Off:      area = null;         break;
+            case ClampMode.Off: area = null; break;
         }
 
         if (area == null)
@@ -99,14 +111,14 @@ public class MiniGameLocalMovementBinder : MonoBehaviour
 
         // XZ clamp by default; keep Y free unless asked
         Vector3 center = area.bounds.center;
-        Vector3 size   = area.bounds.size;
+        Vector3 size = area.bounds.size;
 
         if (!clampY)
         {
             if (_origin == null) BindRig();
             float y = _origin ? _origin.transform.position.y : center.y;
             center.y = y;
-            size.y   = 1000f; // effectively no Y clamp
+            size.y = 1000f; // effectively no Y clamp
         }
 
         _limiter.SetArea(center, size);
@@ -139,14 +151,14 @@ public class MiniGameLocalMovementBinder : MonoBehaviour
     public void EnableLobbyClamp()
     {
         _mode = ClampMode.Lobby;
-        if (_shouldAffect && BindRig()) ApplyClamp(updateOnly:false);
+        if (_shouldAffect && BindRig()) ApplyClamp(updateOnly: false);
     }
 
     [ContextMenu("Enable MiniGame Clamp")]
     public void EnableMiniGameClamp()
     {
         _mode = ClampMode.MiniGame;
-        if (_shouldAffect && BindRig()) ApplyClamp(updateOnly:false);
+        if (_shouldAffect && BindRig()) ApplyClamp(updateOnly: false);
     }
 
     [ContextMenu("Disable Clamp")]

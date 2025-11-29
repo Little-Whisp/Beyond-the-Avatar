@@ -2,7 +2,7 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using Unity.XR.CoreUtils;
-using XRMultiplayer; // <-- important so we can access XRINetworkPlayer
+using XRMultiplayer; // <-- needed to access XRINetworkPlayer
 
 public class PlayerSpawnController : NetworkBehaviour
 {
@@ -19,27 +19,40 @@ public class PlayerSpawnController : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        if (!IsServer) return;
+        // Only apply spawn logic to the local player
+        if (!IsOwner)
+            return;
+
+        var xrPlayer = GetComponent<XRINetworkPlayer>();
+        if (xrPlayer == null)
+            return;
+
+        // Listen for PlayerNumber assignment
+        xrPlayer.PlayerNumber.OnValueChanged += OnPlayerNumberAssigned;
+
+        // If already assigned, apply immediately
+        if (xrPlayer.PlayerNumber.Value >= 0)
+            OnPlayerNumberAssigned(-1, xrPlayer.PlayerNumber.Value);
+
+    }
+
+    private void OnPlayerNumberAssigned(int oldValue, int newValue)
+    {
+        if (newValue <= 0)
+            return;
+
+        Debug.Log($"[PlayerSpawnController] PlayerNumber received: {newValue} for ClientId={OwnerClientId}. Requesting spawn...");
 
         var ss = SpawnSystem.Instance;
         if (ss == null)
-        {
-            Debug.LogWarning("[PlayerSpawnController] No SpawnSystem.Instance found.");
             return;
-        }
 
         var (pos, rot) = ss.GetSpawnFor(OwnerClientId);
 
-        // Get XRINetworkPlayer to check PlayerNumber
-        var playerObj = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(OwnerClientId);
-        var xrPlayer = playerObj != null ? playerObj.GetComponent<XRINetworkPlayer>() : null;
+        // Bartender = PlayerNumber 1
+        bool lockMovement = ss.lockNonBartenderAtSpawn && newValue != 1;
 
-        bool isBartender = xrPlayer != null && xrPlayer.PlayerNumber.Value == 1;
-
-        // Only bartender gets movement if lock enabled
-        bool lockMovement = ss.lockNonBartenderAtSpawn && !isBartender;
-
-        transform.SetPositionAndRotation(pos, rot);
+        Debug.Log($"[PlayerSpawnController] Applying spawn for ClientId={OwnerClientId} at pos={pos} rot={rot} lockMovement={lockMovement}");
 
         ApplySpawnClientRpc(pos, rot, lockMovement, new ClientRpcParams
         {

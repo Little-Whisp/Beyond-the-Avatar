@@ -5,20 +5,22 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 public class GlassPickup : MonoBehaviour
 {
     private XRGrabInteractable grabInteractable;
+    private Outline outline;
+
+    public TriggerZone[] triggerZones;
 
     private void Awake()
     {
         grabInteractable = GetComponent<XRGrabInteractable>();
+        outline = GetComponent<Outline>();
+
+        if (outline != null)
+            outline.enabled = false;
 
         if (grabInteractable != null)
         {
-            Debug.Log("[GlassPickup] XRGrabInteractable found on " + gameObject.name);
             grabInteractable.selectEntered.AddListener(OnGrabbed);
             grabInteractable.selectExited.AddListener(OnReleased);
-        }
-        else
-        {
-            Debug.LogWarning("[GlassPickup] No XRGrabInteractable found on " + gameObject.name);
         }
     }
 
@@ -33,31 +35,36 @@ public class GlassPickup : MonoBehaviour
 
     private void OnGrabbed(SelectEnterEventArgs args)
     {
-        Debug.Log("[GlassPickup] OnGrabbed fired for " + gameObject.name);
+        Debug.Log($"[GlassPickup] Picked up {gameObject.name}");
 
-        if (ZoneVisualManager.Instance != null)
+        // Hide everything first (clean slate)
+        ZoneVisualManager.Instance?.HideAllZones();
+
+        // Then highlight the correct zones
+        if (triggerZones != null)
         {
-            Debug.Log("[GlassPickup] Calling ShowAllZones()");
-            ZoneVisualManager.Instance.ShowAllZones();
+            foreach (var zone in triggerZones)
+            {
+                if (zone != null)
+                {
+                    Debug.Log($"[GlassPickup] Highlight zone: {zone.name}");
+                    zone.OnGlassPickedUp(gameObject);
+                }
+            }
         }
-        else
-        {
-            Debug.LogWarning("[GlassPickup] ZoneVisualManager.Instance is null!");
-        }
+
+        if (outline != null)
+            outline.enabled = false;
     }
 
     private void OnReleased(SelectExitEventArgs args)
     {
-        Debug.Log("[GlassPickup] OnReleased fired for " + gameObject.name);
+        Debug.Log($"[GlassPickup] Released {gameObject.name}");
 
-        if (ZoneVisualManager.Instance != null)
-        {
-            Debug.Log("[GlassPickup] Calling HideAllZones()");
-            ZoneVisualManager.Instance.HideAllZones();
-        }
-        else
-        {
-            Debug.LogWarning("[GlassPickup] ZoneVisualManager.Instance is null!");
-        }
+        // Hide all zones when the glass is let go
+        ZoneVisualManager.Instance?.HideAllZones();
+
+        if (outline != null)
+            outline.enabled = false;
     }
 }

@@ -3,6 +3,7 @@ using UnityEngine;
 public class TriggerZone : MonoBehaviour
 {
     [Header("Basic Settings")]
+    
     public bool isGlassZone = true;
     public string drinkTag = "Cocktail";   // must match spawned drink tag
 
@@ -58,4 +59,21 @@ public class TriggerZone : MonoBehaviour
 
         promptTrigger?.ResetPrompt();
     }
+
+    public void OnGlassPickedUp(GameObject grabbedGlass)
+    {
+        Debug.Log($"[TriggerZone] OnGlassPickedUp called for zone {name} with glass {grabbedGlass.name}");
+        if (zoneVisual != null)
+        {
+            Debug.Log($"[TriggerZone] Enabling zoneVisual for zone {name}");
+            zoneVisual.SetActive(true);
+        }
+        else
+        {
+            Debug.LogWarning($"[TriggerZone] zoneVisual is null for zone {name}");
+        }
+    }
+
+
+
 }

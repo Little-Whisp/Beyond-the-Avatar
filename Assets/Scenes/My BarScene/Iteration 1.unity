@@ -286,7 +286,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 42171784}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: af4ec56a02178724eba7879f8562c2b1, type: 3}
+  m_Script: {fileID: 11500000, guid: 55119a4200a87514d87a4426ef8d06a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZoneVisualManager
   allZones:
@@ -7631,7 +7631,7 @@ PrefabInstance:
     - target: {fileID: 2808410049059023866, guid: 0267a1d338db2bf4c9625e450bbaaad0,
         type: 3}
       propertyPath: m_SessionType
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3763782728091630267, guid: 0267a1d338db2bf4c9625e450bbaaad0,
         type: 3}
@@ -10371,6 +10371,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2bb41651ffced724687620abfa2657e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShakerContainer
+  cocktailBook: {fileID: 11400000, guid: 8a1751eb78bfac64d9ed85ed034ee728, type: 2}
+  spawnPoint: {fileID: 685723874}
   capacityMl: 150
   liquidRenderer: {fileID: 1240518250}
   fillProp: _FillAmount

@@ -177,10 +177,9 @@ namespace XRMultiplayer
                 NetworkVariableReadPermission.Everyone,
                 NetworkVariableWritePermission.Server);
 
-        // Server-side static counter for non-host clients
+        // Static counter for non-host clients (starts at 1, host is 0)
         static int s_NextClientNumber = 1;
 
-        // Convenience: Player 1 is the bartender
         public bool IsBartender => PlayerNumber.Value == 1;
 
         protected void Awake()
@@ -270,13 +269,20 @@ namespace XRMultiplayer
         {
             base.OnNetworkSpawn();
 
-            if (IsServer)
+            // Only assign if not already assigned
+            if (PlayerNumber.Value < 0)
             {
-                // Distributed authority OR regular host mode
-                PlayerNumber.Value = s_NextClientNumber++;
+                // Host's own player object
+                if (NetworkManager.Singleton.IsHost && IsOwner)
+                {
+                    PlayerNumber.Value = 0;
+                }
+                else
+                {
+                    PlayerNumber.Value = s_NextClientNumber++;
+                }
+                Debug.Log($"[XRINetworkPlayer] Assigned PlayerNumber={PlayerNumber.Value} for ClientId={OwnerClientId}  (IsHost={NetworkManager.Singleton.IsHost}, IsServer={NetworkManager.Singleton.IsServer}, IsOwner={IsOwner})");
             }
-
-            
 
             PlayerNumber.OnValueChanged += OnPlayerNumberChanged;
             OnPlayerNumberChanged(-1, PlayerNumber.Value);

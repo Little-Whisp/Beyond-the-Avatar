@@ -1,7 +1,13 @@
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 public class ShakerContainer : MonoBehaviour
 {
+
+    [Header("Cocktail Spawning (Test Only)")]
+    public CocktailBook cocktailBook;
+    public Transform spawnPoint;
+
     [Header("Capacity")]
     public float capacityMl = 500f;
 
@@ -208,5 +214,65 @@ public class ShakerContainer : MonoBehaviour
         float y = Mathf.Lerp(emptyY, fullY, t);
         m.SetVector(fillID, new Vector3(0, y, 0));
     }
+
+    [ContextMenu("Spawn Test Cocktail (Play Mode Only)")]
+    public void SpawnTestCocktail()
+    {
+        Debug.Log("SpawnTestCocktail() CLICKED!");
+
+        if (!Application.isPlaying)
+        {
+            Debug.LogWarning("You must be in Play Mode to spawn cocktails.");
+            return;
+        }
+
+        if (cocktailBook == null)
+        {
+            Debug.LogWarning("No CocktailBook assigned.");
+            return;
+        }
+
+        var entry = cocktailBook.GetRandomEntry();
+        Debug.Log("Entry: " + entry);
+        Debug.Log("Entry.prefab: " + entry.prefab);
+
+        if (entry == null || entry.prefab == null)
+        {
+            Debug.LogWarning("CocktailBook has no valid entries.");
+            return;
+        }
+
+        // ⭐ Use the assigned spawnPoint OR fallback safely
+        Vector3 pos = spawnPoint != null
+            ? spawnPoint.position
+            : transform.position + Vector3.up * 1.2f;
+
+        GameObject newCocktail = Instantiate(entry.prefab, pos, Quaternion.identity);
+        newCocktail.tag = "Cocktail";
+
+        // ⭐ Add physics (in case prefab lacks them)
+        var rb = newCocktail.GetComponent<Rigidbody>();
+        if (rb == null) rb = newCocktail.AddComponent<Rigidbody>();
+        rb.isKinematic = false;
+        rb.useGravity = true;
+
+        var col = newCocktail.GetComponent<Collider>();
+        if (col == null) col = newCocktail.AddComponent<BoxCollider>();
+        col.enabled = true;
+
+        // ⭐ Add XRGrabInteractable if missing
+        var grab = newCocktail.GetComponent<XRGrabInteractable>();
+        if (grab == null) grab = newCocktail.AddComponent<XRGrabInteractable>();
+
+        // ⭐ Add GlassPickup if missing
+        var pickup = newCocktail.GetComponent<GlassPickup>();
+        if (pickup == null) pickup = newCocktail.AddComponent<GlassPickup>();
+
+        // ⭐ Assign trigger zones (needed for highlights)
+        pickup.triggerZones = FindObjectsOfType<TriggerZone>();
+
+        Debug.Log("Spawned test cocktail: " + newCocktail.name);
+    }
+
 #endif
 }
