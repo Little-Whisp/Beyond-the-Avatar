@@ -291,6 +291,7 @@ GameObject:
   - component: {fileID: 2722608077457501448}
   - component: {fileID: 1596053583424470562}
   - component: {fileID: 952503991708680279}
+  - component: {fileID: -3739913409576415218}
   m_Layer: 0
   m_Name: XRI_Network_Player_Avatar
   m_TagString: Player
@@ -363,6 +364,8 @@ MonoBehaviour:
   - {fileID: 4642310900114525791}
   - {fileID: 4269012277223116051}
   m_PlayerNameTag: {fileID: 963882574567827604}
+  PlayerNumber:
+    m_InternalValue: -1
 --- !u!114 &1165756021160359066
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -563,6 +566,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnlockLocomotionOnJoin
   ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &-3739913409576415218
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5358844088564582620}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 012c14eee378dd043a3c2d6b290f0465, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerIdentity
+  playerName: 
+  avatarType: 
 --- !u!1 &5908336471056132768
 GameObject:
   m_ObjectHideFlags: 0

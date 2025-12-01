@@ -1,70 +1,55 @@
 using UnityEngine;
+// using Unity.Netcode;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using System.Collections;   
 
 public class GlassPickup : MonoBehaviour
 {
-    private XRGrabInteractable grabInteractable;
-    private Outline outline;
-
+    private XRGrabInteractable grab;
     public TriggerZone[] triggerZones;
+
+    private bool allowHighlight = false;   // Blocks auto-highlights on spawn
 
     private void Awake()
     {
-        grabInteractable = GetComponent<XRGrabInteractable>();
-        outline = GetComponent<Outline>();
+        grab = GetComponent<XRGrabInteractable>();
 
-        if (outline != null)
-            outline.enabled = false;
+        // Prevent highlight at start
+        allowHighlight = false;
+        StartCoroutine(EnableHighlightAfterDelay());
 
-        if (grabInteractable != null)
-        {
-            grabInteractable.selectEntered.AddListener(OnGrabbed);
-            grabInteractable.selectExited.AddListener(OnReleased);
-        }
+        grab.selectEntered.AddListener(OnGrabbed);
+        grab.selectExited.AddListener(OnReleased);
     }
 
-    private void OnDestroy()
+    private IEnumerator EnableHighlightAfterDelay()
     {
-        if (grabInteractable != null)
-        {
-            grabInteractable.selectEntered.RemoveListener(OnGrabbed);
-            grabInteractable.selectExited.RemoveListener(OnReleased);
-        }
+        // Wait long enough for XR + Netcode to fully finish syncing
+        yield return new WaitForSeconds(0.25f);
+
+        allowHighlight = true;
+        Debug.Log("✔ Highlight now enabled. Auto-grab protection finished.");
     }
 
     private void OnGrabbed(SelectEnterEventArgs args)
     {
-        Debug.Log($"[GlassPickup] Picked up {gameObject.name}");
-
-        // Hide everything first (clean slate)
-        ZoneVisualManager.Instance?.HideAllZones();
-
-        // Then highlight the correct zones
-        if (triggerZones != null)
+        if (!allowHighlight)
         {
-            foreach (var zone in triggerZones)
-            {
-                if (zone != null)
-                {
-                    Debug.Log($"[GlassPickup] Highlight zone: {zone.name}");
-                    zone.OnGlassPickedUp(gameObject);
-                }
-            }
+            Debug.Log(" Blocked auto-grab highlight.");
+            return;
         }
 
-        if (outline != null)
-            outline.enabled = false;
+        foreach (var zone in triggerZones)
+            zone?.ShowHighlight();
     }
 
     private void OnReleased(SelectExitEventArgs args)
     {
-        Debug.Log($"[GlassPickup] Released {gameObject.name}");
+        if (!allowHighlight)
+            return;
 
-        // Hide all zones when the glass is let go
-        ZoneVisualManager.Instance?.HideAllZones();
-
-        if (outline != null)
-            outline.enabled = false;
+        foreach (var zone in triggerZones)
+            zone?.HideHighlight();
     }
 }

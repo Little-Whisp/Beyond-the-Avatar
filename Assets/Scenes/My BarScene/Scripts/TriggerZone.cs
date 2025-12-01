@@ -1,27 +1,42 @@
 using UnityEngine;
+using Unity.Netcode;
 
 public class TriggerZone : MonoBehaviour
 {
     [Header("Basic Settings")]
-    
     public bool isGlassZone = true;
-    public string drinkTag = "Cocktail";   // must match spawned drink tag
+    public string drinkTag = "Cocktail";
 
     [Header("Prompt System")]
-    public PromptTrigger promptTrigger;     // drag your PromptTrigger here
+    public PromptTrigger promptTrigger;
 
-    [Header("Who this zone belongs to")]
-    public string playerName = "P2 (Customer)"; // set this per zone in Inspector
+    [Header("Player Base (dynamic)")]
+    public PlayerBaseTrigger playerBase;
 
-    [Header("Visual (optional)")]
-    public GameObject zoneVisual;           // highlight / ring / icon for this zone
+    [Header("Visual (Highlight)")]
+    public GameObject zoneVisual;
+
+    public Transform glassAnchor;
 
     private GameObject lastPlacedGlass;
 
+    private void Awake()
+    {
+        if (zoneVisual != null)
+            zoneVisual.SetActive(false);
+    }
+
+
+    private void OnNetworkSpawn()
+    {
+        if (zoneVisual != null)
+        {
+            zoneVisual.SetActive(false);
+        }
+    }
+
     private void OnTriggerEnter(Collider other)
     {
-        Debug.Log("[TriggerZone] OnTriggerEnter: " + other.gameObject.name);
-
         if (!isGlassZone || !other.CompareTag(drinkTag))
             return;
 
@@ -32,48 +47,45 @@ public class TriggerZone : MonoBehaviour
     {
         lastPlacedGlass = glass;
 
-        // Freeze the glass (optional)
+        if (glassAnchor != null)
+        {
+            glass.transform.position = glassAnchor.position;
+            glass.transform.rotation = glassAnchor.rotation;
+        }
+
         var rb = glass.GetComponent<Rigidbody>();
         var col = glass.GetComponent<Collider>();
-        var grab = glass.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
 
         if (rb != null) rb.isKinematic = true;
-        if (col != null) col.enabled = false;
-        if (grab != null) grab.enabled = false;
+        if (col != null) col.enabled = true;
 
         if (zoneVisual != null)
-            zoneVisual.SetActive(true);
+            zoneVisual.SetActive(false);
 
-        string currentPrompt = (promptTrigger != null && promptTrigger.promptGenerator != null)
-            ? promptTrigger.promptGenerator.currentPrompt
-            : "UnknownPrompt";
+        string owner = playerBase != null ? playerBase.assignedPlayerName : "Unknown";
+        string avatar = playerBase != null ? playerBase.assignedAvatarType : "Unknown";
 
-        Debug.Log($"[DATA] Player: {playerName} | Prompt: {currentPrompt}");
+        string prompt = promptTrigger?.promptGenerator?.currentPrompt ?? "UnknownPrompt";
 
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.LogEvent(
-                $"Served -> Player: {playerName} | Prompt: {currentPrompt}"
-            );
-        }
+        Debug.Log($"[DATA] Player: {owner} | Avatar: {avatar} | Prompt: {prompt}");
+
+        GameManager.Instance?.LogEvent(
+            $"Served -> Player: {owner} | Avatar: {avatar} | Prompt: {prompt}"
+        );
 
         promptTrigger?.ResetPrompt();
     }
 
-    public void OnGlassPickedUp(GameObject grabbedGlass)
+    public void ShowHighlight()
     {
-        Debug.Log($"[TriggerZone] OnGlassPickedUp called for zone {name} with glass {grabbedGlass.name}");
+        Debug.Log($"ShowHighlight() on {name}");
         if (zoneVisual != null)
-        {
-            Debug.Log($"[TriggerZone] Enabling zoneVisual for zone {name}");
             zoneVisual.SetActive(true);
-        }
-        else
-        {
-            Debug.LogWarning($"[TriggerZone] zoneVisual is null for zone {name}");
-        }
     }
 
-
-
+    public void HideHighlight()
+    {
+        if (zoneVisual != null)
+            zoneVisual.SetActive(false);
+    }
 }
