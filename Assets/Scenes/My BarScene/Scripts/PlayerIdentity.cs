@@ -3,7 +3,7 @@ using UnityEngine;
 public class PlayerIdentity : MonoBehaviour
 {
     public string playerName;      // Example: "Player1"
-    public string avatarType;      // Example: "GreenAvatar", "Robot", etc.
+    public string avatarType;     
 
     void Awake()
 {

@@ -64,15 +64,11 @@ public class MiniGameLocalMovementBinder : MonoBehaviour
         _shouldAffect = isClientOnly || (isHost && affectHost);
         _initialized = true;
 
-        // Bartender check BEFORE any clamp logic
-        var xrPlayer = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject()
-                    .GetComponent<XRMultiplayer.XRINetworkPlayer>();
-
-        if (xrPlayer != null && xrPlayer.PlayerNumber.Value == 1)
+        // Host is bartender → do NOT clamp
+        if (nm.IsHost)
         {
-            // Bartender, do NOT clamp
             _shouldAffect = false;
-            Debug.Log("[Binder] Bartender detected — clamp disabled.");
+            Debug.Log("[Binder] Host detected — clamp disabled.");
             return;
         }
 

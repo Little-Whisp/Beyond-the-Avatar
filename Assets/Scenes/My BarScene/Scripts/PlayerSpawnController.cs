@@ -23,34 +23,17 @@ public class PlayerSpawnController : NetworkBehaviour
         if (!IsOwner)
             return;
 
-        var xrPlayer = GetComponent<XRINetworkPlayer>();
-        if (xrPlayer == null)
-            return;
-
-        // Listen for PlayerNumber assignment
-        xrPlayer.PlayerNumber.OnValueChanged += OnPlayerNumberAssigned;
-
-        // If already assigned, apply immediately
-        if (xrPlayer.PlayerNumber.Value >= 0)
-            OnPlayerNumberAssigned(-1, xrPlayer.PlayerNumber.Value);
-
-    }
-
-    private void OnPlayerNumberAssigned(int oldValue, int newValue)
-    {
-        if (newValue <= 0)
-            return;
-
-        Debug.Log($"[PlayerSpawnController] PlayerNumber received: {newValue} for ClientId={OwnerClientId}. Requesting spawn...");
+        // Determine bartender by IsHost
+        bool isBartender = NetworkManager.Singleton.IsHost;
 
         var ss = SpawnSystem.Instance;
         if (ss == null)
             return;
 
-        var (pos, rot) = ss.GetSpawnFor(OwnerClientId);
+        var (pos, rot) = ss.GetSpawnForHostState(isBartender);
 
-        // Bartender = PlayerNumber 1
-        bool lockMovement = ss.lockNonBartenderAtSpawn && newValue != 1;
+        // Lock movement for non-hosts if required
+        bool lockMovement = ss.lockNonBartenderAtSpawn && !isBartender;
 
         Debug.Log($"[PlayerSpawnController] Applying spawn for ClientId={OwnerClientId} at pos={pos} rot={rot} lockMovement={lockMovement}");
 
