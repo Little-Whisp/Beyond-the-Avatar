@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 public class GlassResultReceiver : MonoBehaviour
 {
@@ -8,12 +9,11 @@ public class GlassResultReceiver : MonoBehaviour
     public GameObject poofVfx;
     public AudioSource sfx;
 
-    [Header("Book & Tuning")]
+    [Header("Book")]
     public CocktailBook cocktailBook;
-    [Range(1f, 6f)] public float sharpness = 3f;
 
     [Header("Spawn Decorator")]
-    public SpawnDecorator decorator; // assign in Inspector
+    public SpawnDecorator decorator;
 
     float mlOld, mlLife, mlImp;
 
@@ -28,68 +28,27 @@ public class GlassResultReceiver : MonoBehaviour
 
     void Update()
     {
-        if (glass != null && glass.IsFull) Serve();
+        if (glass != null && glass.IsFull)
+            Serve();
     }
 
     void Serve()
     {
-        float total = Mathf.Max(0.0001f, mlOld + mlLife + mlImp);
-        float co = mlOld / total, cl = mlLife / total, ci = mlImp / total;
+        GameObject prefab = cocktailBook ? cocktailBook.GetRandom() : null;
+        if (!prefab) return;
 
-        Serve(co, cl, ci);
-    }
+        Vector3 pos = spawnPoint ? spawnPoint.position : transform.position;
+        Quaternion rot = spawnPoint ? spawnPoint.rotation : Quaternion.identity;
 
-    void Serve(float co, float cl, float ci)
-    {
-        GameObject prefab = cocktailBook ? cocktailBook.GetWeighted(co, cl, ci, sharpness) : null;
-        if (prefab)
-        {
-            Vector3 pos = spawnPoint ? spawnPoint.position : transform.position;
-            Quaternion rot = spawnPoint ? spawnPoint.rotation : Quaternion.identity;
+        GameObject drink = Instantiate(prefab, pos, rot);
+        drink.tag = "Cocktail";
 
-            GameObject drink = Instantiate(prefab, pos, rot);
-            Debug.Log("[GlassResultReceiver] Spawned drink: " + drink.name);
+        // ✅ 1) Decorate FIRST (it may add/replace colliders/grab/etc)
+        if (decorator) decorator.Decorate(drink);
 
-            // Tag as "Cocktail" so TriggerZone can detect it
-            drink.tag = "Cocktail";
-
-            // 🔹 Find XRGrabInteractable anywhere in the spawned prefab
-            var grab = drink.GetComponentInChildren<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
-
-            GlassPickup pickup = null;
-
-            if (grab != null)
-            {
-                // Put GlassPickup on the same GameObject as the grab component
-                pickup = grab.GetComponent<GlassPickup>();
-                if (pickup == null)
-                {
-                    pickup = grab.gameObject.AddComponent<GlassPickup>();
-                    Debug.Log("[GlassResultReceiver] Added GlassPickup to grab object: " + grab.gameObject.name);
-                }
-            }
-            else
-            {
-                Debug.LogWarning("[GlassResultReceiver] Spawned drink has no XRGrabInteractable: " + drink.name);
-
-                // Fallback: attach GlassPickup to the root
-                pickup = drink.GetComponent<GlassPickup>();
-                if (pickup == null)
-                {
-                    pickup = drink.AddComponent<GlassPickup>();
-                    Debug.Log("[GlassResultReceiver] Added GlassPickup to root drink: " + drink.name);
-                }
-            }
-
-            // 🔹 Assign trigger zones so highlights work
-            if (pickup != null)
-            {
-                pickup.triggerZones = FindObjectsOfType<TriggerZone>();
-            }
-
-            // Decorate drink (ice, garnish, etc.)
-            if (decorator) decorator.Decorate(drink);
-        }
+        // ✅ 2) Then ensure grabbable (on the actual grab object)
+        // EnsureGrabbable(drink);
+        FindObjectOfType<ShakerContainer>()?.MakeCocktailGrabbable(drink);
 
         if (poofVfx)
         {
@@ -105,5 +64,53 @@ public class GlassResultReceiver : MonoBehaviour
         }
 
         mlOld = mlLife = mlImp = 0f;
+    }
+
+    private void EnsureGrabbable(GameObject root)
+    {
+        // Find (or create) the XRGrabInteractable that the hands will actually use
+        var grab = root.GetComponentInChildren<XRGrabInteractable>(true);
+        GameObject target = grab ? grab.gameObject : root;
+
+        if (!grab)
+            grab = target.AddComponent<XRGrabInteractable>();
+
+        // Rigidbody MUST be on the same object as the grab collider setup
+        var rb = target.GetComponent<Rigidbody>();
+        if (!rb) rb = target.AddComponent<Rigidbody>();
+        rb.isKinematic = false;
+        rb.useGravity = true;
+
+        // Ensure at least 1 solid collider exists on/under the grab object
+        var solidCols = target.GetComponentsInChildren<Collider>(true);
+        bool hasSolid = false;
+        foreach (var c in solidCols)
+        {
+            if (c && !c.isTrigger) { hasSolid = true; break; }
+        }
+
+        if (!hasSolid)
+        {
+            var box = target.GetComponent<BoxCollider>();
+            if (!box) box = target.AddComponent<BoxCollider>();
+            box.isTrigger = false;
+        }
+
+        // Rebuild grab.colliders to ONLY non-trigger colliders under target
+        grab.colliders.Clear();
+        foreach (var c in target.GetComponentsInChildren<Collider>(true))
+        {
+            if (c && !c.isTrigger)
+                grab.colliders.Add(c);
+        }
+
+        // GlassPickup must be on the same object as XRGrabInteractable
+        var pickup = target.GetComponent<GlassPickup>();
+        if (!pickup) pickup = target.AddComponent<GlassPickup>();
+
+        pickup.triggerZones = FindObjectsOfType<TriggerZone>();
+        // Rebuild caches and listeners to ensure Awake-time caching doesn't leave
+        // stale/null references after runtime decoration.
+        pickup.Reinitialize();
     }
 }

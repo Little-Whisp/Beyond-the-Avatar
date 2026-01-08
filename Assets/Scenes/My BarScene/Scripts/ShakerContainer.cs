@@ -200,6 +200,32 @@ public class ShakerContainer : MonoBehaviour
         hud?.SetMixed(false, 0);
     }
 
+    public void MakeCocktailGrabbable(GameObject newCocktail)
+    {
+        if (!newCocktail) return;
+
+        newCocktail.tag = "Cocktail";
+
+        var rb = newCocktail.GetComponent<Rigidbody>();
+        if (rb == null) rb = newCocktail.AddComponent<Rigidbody>();
+        rb.isKinematic = false;
+        rb.useGravity = true;
+
+        var col = newCocktail.GetComponent<Collider>();
+        if (col == null) col = newCocktail.AddComponent<BoxCollider>();
+        col.enabled = true;
+        col.isTrigger = false; // ✅ important for grabbing
+
+        var grab = newCocktail.GetComponent<XRGrabInteractable>();
+        if (grab == null) grab = newCocktail.AddComponent<XRGrabInteractable>();
+
+        var pickup = newCocktail.GetComponent<GlassPickup>();
+        if (pickup == null) pickup = newCocktail.AddComponent<GlassPickup>();
+
+        pickup.triggerZones = FindObjectsOfType<TriggerZone>();
+    }
+
+
 #if UNITY_EDITOR
     void OnValidate()
     {
@@ -250,26 +276,29 @@ public class ShakerContainer : MonoBehaviour
         GameObject newCocktail = Instantiate(entry.prefab, pos, Quaternion.identity);
         newCocktail.tag = "Cocktail";
 
+        MakeCocktailGrabbable(newCocktail);
+
+
         // ⭐ Add physics (in case prefab lacks them)
-        var rb = newCocktail.GetComponent<Rigidbody>();
-        if (rb == null) rb = newCocktail.AddComponent<Rigidbody>();
-        rb.isKinematic = false;
-        rb.useGravity = true;
+        // var rb = newCocktail.GetComponent<Rigidbody>();
+        // if (rb == null) rb = newCocktail.AddComponent<Rigidbody>();
+        // rb.isKinematic = false;
+        // rb.useGravity = true;
 
-        var col = newCocktail.GetComponent<Collider>();
-        if (col == null) col = newCocktail.AddComponent<BoxCollider>();
-        col.enabled = true;
+        // var col = newCocktail.GetComponent<Collider>();
+        // if (col == null) col = newCocktail.AddComponent<BoxCollider>();
+        // col.enabled = true;
 
-        // ⭐ Add XRGrabInteractable if missing
-        var grab = newCocktail.GetComponent<XRGrabInteractable>();
-        if (grab == null) grab = newCocktail.AddComponent<XRGrabInteractable>();
+        // // ⭐ Add XRGrabInteractable if missing
+        // var grab = newCocktail.GetComponent<XRGrabInteractable>();
+        // if (grab == null) grab = newCocktail.AddComponent<XRGrabInteractable>();
 
-        // ⭐ Add GlassPickup if missing
-        var pickup = newCocktail.GetComponent<GlassPickup>();
-        if (pickup == null) pickup = newCocktail.AddComponent<GlassPickup>();
+        // // ⭐ Add GlassPickup if missing
+        // var pickup = newCocktail.GetComponent<GlassPickup>();
+        // if (pickup == null) pickup = newCocktail.AddComponent<GlassPickup>();
 
-        // ⭐ Assign trigger zones (needed for highlights)
-        pickup.triggerZones = FindObjectsOfType<TriggerZone>();
+        // // ⭐ Assign trigger zones (needed for highlights)
+        // pickup.triggerZones = FindObjectsOfType<TriggerZone>();
 
         Debug.Log("Spawned test cocktail: " + newCocktail.name);
     }

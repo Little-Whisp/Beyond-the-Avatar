@@ -33,18 +33,14 @@ public class TriggerZone : MonoBehaviour
     private void Start()
     {
         Debug.Log($"[TriggerZone] START running on {name}", this);
-
         ForceHide();
     }
 
-    // ✅ Force everything visual OFF (even if zoneVisual was assigned wrong)
     public void ForceHide()
     {
-        // hide the assigned object
         if (zoneVisual != null)
             zoneVisual.SetActive(false);
 
-        // ALSO stop + disable any particles under this zone
         var ps = GetComponentsInChildren<ParticleSystem>(true);
         foreach (var p in ps)
         {
@@ -53,9 +49,7 @@ public class TriggerZone : MonoBehaviour
         }
     }
 
-    // ⚠️ NOTE:
-    // OnNetworkSpawn() ONLY runs if this script inherits NetworkBehaviour.
-    // Right now this method will NOT be called by Netcode.
+    // NOTE: Only runs if this inherits NetworkBehaviour (it doesn't right now)
     private void OnNetworkSpawn()
     {
         ForceHide();
@@ -66,14 +60,13 @@ public class TriggerZone : MonoBehaviour
         if (!isGlassZone || !other.CompareTag(drinkTag))
             return;
 
-        // ✅ If it's currently being held, don't "place" it (prevents re-kinematic)
+        // ✅ If it's currently being held, don't "place" it
         var grab = other.GetComponentInParent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
         if (grab != null && grab.isSelected)
             return;
 
         HandleGlassPlacement(other.gameObject);
     }
-
 
     private void HandleGlassPlacement(GameObject glass)
     {
@@ -88,14 +81,17 @@ public class TriggerZone : MonoBehaviour
         var rb = glass.GetComponent<Rigidbody>();
         if (rb != null)
         {
-            rb.isKinematic = true;                 // lock it in place on the anchor
-            rb.useGravity = false;
-            rb.constraints = RigidbodyConstraints.None;
+            // ✅ lock briefly so it "snaps" cleanly
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
+            rb.isKinematic = true;
+            rb.useGravity = false;
+
+            // ✅ IMPORTANT: release physics again so it can be grabbed normally
+            // (matches how your other bar items behave)
+            StartCoroutine(ReleasePhysicsNextFrame(rb));
         }
 
-        // Hide highlight again after serving
         ForceHide();
 
         string owner = playerBase != null ? playerBase.assignedPlayerName : "Unknown";
@@ -111,13 +107,25 @@ public class TriggerZone : MonoBehaviour
         promptTrigger?.ResetPrompt();
     }
 
+    private System.Collections.IEnumerator ReleasePhysicsNextFrame(Rigidbody rb)
+    {
+        // wait a frame so the snap transform settles
+        yield return null;
+
+        if (!rb) yield break;
+
+        rb.isKinematic = false;
+        rb.useGravity = true;
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+    }
+
     public void ShowHighlight()
     {
         if (zoneVisual == null) return;
 
         zoneVisual.SetActive(true);
 
-        // START the highlight particles even if Play On Awake is off
         var ps = zoneVisual.GetComponentsInChildren<ParticleSystem>(true);
         foreach (var p in ps)
         {
@@ -125,8 +133,6 @@ public class TriggerZone : MonoBehaviour
             p.Play(true);
         }
     }
-
-
 
     public void HideHighlight()
     {
