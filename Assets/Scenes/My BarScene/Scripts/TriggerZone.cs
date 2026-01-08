@@ -22,17 +22,43 @@ public class TriggerZone : MonoBehaviour
 
     private void Awake()
     {
-        if (zoneVisual != null)
-            zoneVisual.SetActive(false);
+        ForceHide();
     }
 
+    private void OnEnable()
+    {
+        ForceHide();
+    }
 
+    private void Start()
+    {
+        Debug.Log($"[TriggerZone] START running on {name}", this);
+
+        ForceHide();
+    }
+
+    // ✅ Force everything visual OFF (even if zoneVisual was assigned wrong)
+    public void ForceHide()
+    {
+        // hide the assigned object
+        if (zoneVisual != null)
+            zoneVisual.SetActive(false);
+
+        // ALSO stop + disable any particles under this zone
+        var ps = GetComponentsInChildren<ParticleSystem>(true);
+        foreach (var p in ps)
+        {
+            p.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            p.gameObject.SetActive(false);
+        }
+    }
+
+    // ⚠️ NOTE:
+    // OnNetworkSpawn() ONLY runs if this script inherits NetworkBehaviour.
+    // Right now this method will NOT be called by Netcode.
     private void OnNetworkSpawn()
     {
-        if (zoneVisual != null)
-        {
-            zoneVisual.SetActive(false);
-        }
+        ForceHide();
     }
 
     private void OnTriggerEnter(Collider other)
@@ -40,8 +66,14 @@ public class TriggerZone : MonoBehaviour
         if (!isGlassZone || !other.CompareTag(drinkTag))
             return;
 
+        // ✅ If it's currently being held, don't "place" it (prevents re-kinematic)
+        var grab = other.GetComponentInParent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
+        if (grab != null && grab.isSelected)
+            return;
+
         HandleGlassPlacement(other.gameObject);
     }
+
 
     private void HandleGlassPlacement(GameObject glass)
     {
@@ -54,17 +86,20 @@ public class TriggerZone : MonoBehaviour
         }
 
         var rb = glass.GetComponent<Rigidbody>();
-        var col = glass.GetComponent<Collider>();
+        if (rb != null)
+        {
+            rb.isKinematic = true;                 // lock it in place on the anchor
+            rb.useGravity = false;
+            rb.constraints = RigidbodyConstraints.None;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
 
-        if (rb != null) rb.isKinematic = true;
-        if (col != null) col.enabled = true;
-
-        if (zoneVisual != null)
-            zoneVisual.SetActive(false);
+        // Hide highlight again after serving
+        ForceHide();
 
         string owner = playerBase != null ? playerBase.assignedPlayerName : "Unknown";
         string avatar = playerBase != null ? playerBase.assignedAvatarType : "Unknown";
-
         string prompt = promptTrigger?.promptGenerator?.currentPrompt ?? "UnknownPrompt";
 
         Debug.Log($"[DATA] Player: {owner} | Avatar: {avatar} | Prompt: {prompt}");
@@ -78,14 +113,23 @@ public class TriggerZone : MonoBehaviour
 
     public void ShowHighlight()
     {
-        Debug.Log($"ShowHighlight() on {name}");
-        if (zoneVisual != null)
-            zoneVisual.SetActive(true);
+        if (zoneVisual == null) return;
+
+        zoneVisual.SetActive(true);
+
+        // START the highlight particles even if Play On Awake is off
+        var ps = zoneVisual.GetComponentsInChildren<ParticleSystem>(true);
+        foreach (var p in ps)
+        {
+            p.gameObject.SetActive(true);
+            p.Play(true);
+        }
     }
+
+
 
     public void HideHighlight()
     {
-        if (zoneVisual != null)
-            zoneVisual.SetActive(false);
+        ForceHide();
     }
 }
