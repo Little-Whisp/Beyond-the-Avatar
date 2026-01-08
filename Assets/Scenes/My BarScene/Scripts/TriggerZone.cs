@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using Unity.Netcode;
 
 public class TriggerZone : MonoBehaviour
@@ -19,6 +20,9 @@ public class TriggerZone : MonoBehaviour
     public Transform glassAnchor;
 
     private GameObject lastPlacedGlass;
+
+    private bool _occupied;
+
 
     private void Awake()
     {
@@ -57,16 +61,37 @@ public class TriggerZone : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!isGlassZone || !other.CompareTag(drinkTag))
-            return;
+        if (_occupied) return;
+        if (!isGlassZone) return;
 
-        // ✅ If it's currently being held, don't "place" it
-        var grab = other.GetComponentInParent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
-        if (grab != null && grab.isSelected)
-            return;
+        var go = other.attachedRigidbody
+            ? other.attachedRigidbody.gameObject
+            : other.gameObject;
 
-        HandleGlassPlacement(other.gameObject);
+        if (!go.CompareTag(drinkTag)) return;
+
+        lastPlacedGlass = go;
     }
+
+    private void OnTriggerStay(Collider other)
+    {
+        if (_occupied) return;
+        if (!isGlassZone) return;
+
+        var go = other.attachedRigidbody
+            ? other.attachedRigidbody.gameObject
+            : other.gameObject;
+
+        if (!go.CompareTag(drinkTag)) return;
+
+        var grab = go.GetComponentInChildren<XRGrabInteractable>(true);
+        if (grab && grab.isSelected)
+            return;
+
+        _occupied = true;
+        HandleGlassPlacement(go);
+    }
+
 
     private void HandleGlassPlacement(GameObject glass)
     {

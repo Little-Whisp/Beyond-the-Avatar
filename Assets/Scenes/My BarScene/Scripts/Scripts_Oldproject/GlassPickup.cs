@@ -24,7 +24,7 @@ public class GlassPickup : MonoBehaviour
         myCol = GetComponentInParent<Collider>();
 
 
-        // Cache zone colliders (the trigger colliders on the zones)
+        // Cache zone colliders (the trigger colliders on the )
         if (triggerZones != null && triggerZones.Length > 0)
         {
             var list = new System.Collections.Generic.List<Collider>();
@@ -127,8 +127,18 @@ public class GlassPickup : MonoBehaviour
     private void OnGrabbed(SelectEnterEventArgs args)
     {
         // ✅ ALWAYS do these first (even if highlights are blocked by host/tag checks)
-        IgnoreZones(true);
-        ForceNormalPhysicsNow();
+        // IgnoreZones(true);
+        // ForceNormalPhysicsNow();
+
+        // Keep object stable while grabbed
+        if (rb)
+        {
+            rb.isKinematic = true;
+            rb.useGravity = false;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
 
         Debug.Log($"[GRAB] {name} | tag={tag} | interactor={args.interactorObject?.GetType().Name} | time={Time.time}");
 
@@ -153,7 +163,7 @@ public class GlassPickup : MonoBehaviour
     private void OnReleased(SelectExitEventArgs args)
     {
         // ✅ ALWAYS re-enable zone collisions after release
-        IgnoreZones(false);
+        // IgnoreZones(false);
 
         // ✅ IMPORTANT: make sure it isn't kinematic at detach/throw time
         // (some things set it kinematic during the same frame; FixedUpdate timing helps)
@@ -185,4 +195,6 @@ public class GlassPickup : MonoBehaviour
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
     }
+
+    
 }

@@ -21,9 +21,9 @@ public class GlassResultReceiver : MonoBehaviour
     {
         if (!shaker || ml <= 0f) return;
         var p = shaker.Percentages();
-        mlOld  += p.o * ml;
+        mlOld += p.o * ml;
         mlLife += p.l * ml;
-        mlImp  += p.i * ml;
+        mlImp += p.i * ml;
     }
 
     void Update()
@@ -43,11 +43,13 @@ public class GlassResultReceiver : MonoBehaviour
         GameObject drink = Instantiate(prefab, pos, rot);
         drink.tag = "Cocktail";
 
-        // ✅ 1) Decorate FIRST (it may add/replace colliders/grab/etc)
+        // 1) Decorate FIRST
         if (decorator) decorator.Decorate(drink);
 
-        // ✅ 2) Then ensure grabbable (on the actual grab object)
-        // EnsureGrabbable(drink);
+        // 2) Normalize collider & rigidbody for XR safety
+        NormalizeGrabCollider(drink);
+
+        // 3) Make grabbable ONCE
         FindObjectOfType<ShakerContainer>()?.MakeCocktailGrabbable(drink);
 
         if (poofVfx)
@@ -55,6 +57,7 @@ public class GlassResultReceiver : MonoBehaviour
             Vector3 vfxPos = spawnPoint ? spawnPoint.position : transform.position;
             Instantiate(poofVfx, vfxPos, Quaternion.identity);
         }
+
         if (sfx) sfx.Play();
 
         if (glass)
@@ -66,51 +69,32 @@ public class GlassResultReceiver : MonoBehaviour
         mlOld = mlLife = mlImp = 0f;
     }
 
-    private void EnsureGrabbable(GameObject root)
+    // -------- XR SAFETY NORMALIZATION --------
+    private void NormalizeGrabCollider(GameObject root)
     {
-        // Find (or create) the XRGrabInteractable that the hands will actually use
         var grab = root.GetComponentInChildren<XRGrabInteractable>(true);
-        GameObject target = grab ? grab.gameObject : root;
+        if (!grab) return;
 
-        if (!grab)
-            grab = target.AddComponent<XRGrabInteractable>();
+        var grabRoot = grab.gameObject;
 
-        // Rigidbody MUST be on the same object as the grab collider setup
-        var rb = target.GetComponent<Rigidbody>();
-        if (!rb) rb = target.AddComponent<Rigidbody>();
-        rb.isKinematic = false;
-        rb.useGravity = true;
+        // Ensure Rigidbody is on grab root
+        var rb = grabRoot.GetComponent<Rigidbody>();
+        if (!rb) rb = grabRoot.AddComponent<Rigidbody>();
 
-        // Ensure at least 1 solid collider exists on/under the grab object
-        var solidCols = target.GetComponentsInChildren<Collider>(true);
-        bool hasSolid = false;
-        foreach (var c in solidCols)
+        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+
+        // Remove solid colliders from children (visual-only hierarchy)
+        foreach (var c in grabRoot.GetComponentsInChildren<Collider>(true))
         {
-            if (c && !c.isTrigger) { hasSolid = true; break; }
+            if (c.gameObject != grabRoot)
+                Destroy(c);
         }
 
-        if (!hasSolid)
+        // Ensure exactly ONE solid collider
+        if (!grabRoot.GetComponent<Collider>())
         {
-            var box = target.GetComponent<BoxCollider>();
-            if (!box) box = target.AddComponent<BoxCollider>();
+            var box = grabRoot.AddComponent<BoxCollider>();
             box.isTrigger = false;
         }
-
-        // Rebuild grab.colliders to ONLY non-trigger colliders under target
-        grab.colliders.Clear();
-        foreach (var c in target.GetComponentsInChildren<Collider>(true))
-        {
-            if (c && !c.isTrigger)
-                grab.colliders.Add(c);
-        }
-
-        // GlassPickup must be on the same object as XRGrabInteractable
-        var pickup = target.GetComponent<GlassPickup>();
-        if (!pickup) pickup = target.AddComponent<GlassPickup>();
-
-        pickup.triggerZones = FindObjectsOfType<TriggerZone>();
-        // Rebuild caches and listeners to ensure Awake-time caching doesn't leave
-        // stale/null references after runtime decoration.
-        pickup.Reinitialize();
     }
 }
