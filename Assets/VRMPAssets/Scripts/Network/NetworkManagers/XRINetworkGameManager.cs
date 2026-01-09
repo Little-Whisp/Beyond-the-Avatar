@@ -41,6 +41,10 @@ namespace XRMultiplayer
             Connected
         }
 
+        [SerializeField]
+        private string defaultHostIp = "192.168.68.125";
+
+
         /// <summary>
         /// Max amount of players allowed when creating a new room.
         /// </summary>
@@ -201,6 +205,8 @@ namespace XRMultiplayer
         /// <summary>
         /// See <see cref="MonoBehaviour"/>.
         /// </summary>
+        ///        
+
         protected virtual async void Awake()
         {
             // Check for existing singleton reference. If once already exists early out.
@@ -610,15 +616,29 @@ namespace XRMultiplayer
         /// Hosts a local connection.
         /// This will use the local IP address of the device to connect.
         /// </summary>
+        // public virtual bool HostLocalConnection()
+        // {
+        //     string localIP = GetLocalIPAddress();
+
+        //     var transport = NetworkManager.Singleton.NetworkConfig.NetworkTransport as UnityTransport;
+
+        //     transport.ConnectionData.Address = localIP;
+        //     ConnectedRoomName.Value = "Local Room";
+        //     ConnectedRoomCode = localIP;
+        //     return NetworkManager.Singleton.StartHost();
+        // }
         public virtual bool HostLocalConnection()
         {
             string localIP = GetLocalIPAddress();
 
-            var transport = NetworkManager.Singleton.NetworkConfig.NetworkTransport as UnityTransport;
+            // Save IP so clients can auto-join
+            PlayerPrefs.SetString("LastHostIP", localIP);
+            PlayerPrefs.Save();
 
-            transport.ConnectionData.Address = localIP;
             ConnectedRoomName.Value = "Local Room";
             ConnectedRoomCode = localIP;
+
+            Debug.Log($"[HOST] Hosting on {localIP}:7777");
             return NetworkManager.Singleton.StartHost();
         }
 
@@ -629,10 +649,18 @@ namespace XRMultiplayer
         public virtual bool JoinLocalConnection()
         {
             var transport = NetworkManager.Singleton.NetworkConfig.NetworkTransport as UnityTransport;
+
+            // Auto-fill IP (no typing)
+            string ip = PlayerPrefs.GetString("LastHostIP", defaultHostIp);
+            transport.SetConnectionData(ip, 7777);
+
             ConnectedRoomName.Value = "Local Room";
-            ConnectedRoomCode = transport.ConnectionData.Address;
+            ConnectedRoomCode = ip;
+
+            Debug.Log($"[CLIENT] Joining host at {ip}:7777");
             return NetworkManager.Singleton.StartClient();
         }
+
 
         /// <summary>
         /// Leaves the local connection, either as a host or client.

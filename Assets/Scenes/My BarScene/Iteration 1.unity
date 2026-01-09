@@ -6872,6 +6872,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 543428609926267499, guid: 3967f87296c892e40b57e37bc8601550,
+        type: 3}
+      propertyPath: ConnectionData.ServerListenAddress
+      value: 0.0.0.0
+      objectReference: {fileID: 0}
     - target: {fileID: 874452183138526564, guid: 3967f87296c892e40b57e37bc8601550,
         type: 3}
       propertyPath: m_NetworkConfig.NetworkTopology
