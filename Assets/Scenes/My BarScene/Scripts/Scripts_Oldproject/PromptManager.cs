@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,9 +11,6 @@ public class PromptManager : ScriptableObject
 
     private Dictionary<string, List<string>> categories;
     private Dictionary<string, List<int>> usedIndicesPerCategory;
-
-    private string[] cycleOrder = new string[] { "Agency", "Experience", "Prosocial", "Antisocial" };
-    private int currentCategoryIndex = 0;
 
     private void OnEnable()
     {
@@ -35,44 +31,66 @@ public class PromptManager : ScriptableObject
         };
     }
 
-    public string GetNextPrompt()
+    // ===============================
+    // MAIN METHOD YOU SHOULD USE
+    // ===============================
+    public string[] GetPromptsForPlayer(int playerIndex)
     {
-        // Step 1: Pick the category to use
-        string category = cycleOrder[currentCategoryIndex];
+        bool antisocialFirst = playerIndex % 2 == 0;
 
-        // Step 2: Loop to the next category for next time
-        currentCategoryIndex = (currentCategoryIndex + 1) % cycleOrder.Length;
+        if (antisocialFirst)
+        {
+            return new string[]
+            {
+                GetRandomFromCategory("Antisocial"),
+                GetRandomFromCategory("Prosocial")
+            };
+        }
+        else
+        {
+            return new string[]
+            {
+                GetRandomFromCategory("Prosocial"),
+                GetRandomFromCategory("Antisocial")
+            };
+        }
+    }
 
-        // Step 3: Grab prompts + usedIndices
+    // ===============================
+    // CATEGORY-BASED RANDOM PICK
+    // ===============================
+    private string GetRandomFromCategory(string category)
+    {
+        if (!categories.ContainsKey(category))
+            return $"Unknown category: {category}";
+
         List<string> prompts = categories[category];
         List<int> usedIndices = usedIndicesPerCategory[category];
 
-        // Step 4: Handle empty prompt list
         if (prompts == null || prompts.Count == 0)
             return $"No prompts in {category}.";
 
-        // Step 5: If we've used all, reset just that category's history
+        // Reset when all prompts are used
         if (usedIndices.Count >= prompts.Count)
             usedIndices.Clear();
 
-        // Step 6: Pick a new unused random prompt
         int index;
         do
         {
             index = Random.Range(0, prompts.Count);
-        } while (usedIndices.Contains(index) && usedIndices.Count < prompts.Count);
+        }
+        while (usedIndices.Contains(index) && usedIndices.Count < prompts.Count);
 
         usedIndices.Add(index);
         return prompts[index];
     }
 
-
-    public void ResetCategoryCycle()
+    // ===============================
+    // OPTIONAL RESET (NEW SESSION)
+    // ===============================
+    public void ResetAllPromptHistory()
     {
-        currentCategoryIndex = 0;
         foreach (var list in usedIndicesPerCategory.Values)
-        {
             list.Clear();
-        }
     }
 }

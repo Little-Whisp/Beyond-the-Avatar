@@ -1964,6 +1964,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PromptGenerator
   promptText: {fileID: 171273647}
   promptManager: {fileID: 11400000, guid: 9e78d59fe2829e74897e74a125b7bff2, type: 2}
+  playerIndex: 0
   currentPrompt: 
 --- !u!1 &171273650 stripped
 GameObject:
@@ -4102,7 +4103,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d48bbc9493bb5f4a80235d268867c8a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PromptTrigger
-  promptManager: {fileID: 11400000, guid: 9e78d59fe2829e74897e74a125b7bff2, type: 2}
   promptGenerator: {fileID: 171273649}
   playerTag: Player
 --- !u!65 &876002831
@@ -6872,6 +6872,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 874452183138526564, guid: 3967f87296c892e40b57e37bc8601550,
+        type: 3}
+      propertyPath: m_NetworkConfig.NetworkTopology
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 874452183138526564, guid: 3967f87296c892e40b57e37bc8601550,
         type: 3}
       propertyPath: m_NetworkConfig.ForceSamePrefabs
@@ -12704,10 +12709,10 @@ MonoBehaviour:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 42171788}
   - {fileID: 1642683066}
   - {fileID: 1409098979}
   - {fileID: 171273646}
-  - {fileID: 42171788}
   - {fileID: 1524445362}
   - {fileID: 136689608}
   - {fileID: 951627226}

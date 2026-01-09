@@ -5,7 +5,9 @@ namespace XRMultiplayer
 {
     public class BartenderRole : MonoBehaviour
     {
+        [Header("Bartender-only scene objects")]
         public GameObject[] bartenderOnlyObjects;
+
         bool _applied;
 
         void Update()
@@ -13,26 +15,31 @@ namespace XRMultiplayer
             if (_applied)
                 return;
 
-            if (!NetworkManager.Singleton.IsListening)
+            // Wait until Netcode is running
+            if (!NetworkManager.Singleton || !NetworkManager.Singleton.IsListening)
                 return;
 
-            ulong localClientId = NetworkManager.Singleton.LocalClientId;
-            ulong serverClientId = NetworkManager.ServerClientId;
-
-            bool isBartender = localClientId == serverClientId;
-
-
-            Debug.Log(
-                $"[BartenderRole] LocalClientId={localClientId} ServerClientId={serverClientId} → Bartender={isBartender}"
-            );
-
-            foreach (var obj in bartenderOnlyObjects)
+            // HOST = Bartender
+            if (!NetworkManager.Singleton.IsServer)
             {
-                if (obj != null)
-                    obj.SetActive(isBartender);
+                // Client must NEVER see bartender objects
+                SetObjects(false);
+                _applied = true;
+                return;
             }
 
+            Debug.Log("[BartenderRole] Host detected → enabling bartender objects");
+            SetObjects(true);
             _applied = true;
+        }
+
+        void SetObjects(bool state)
+        {
+            foreach (var obj in bartenderOnlyObjects)
+            {
+                if (obj)
+                    obj.SetActive(state);
+            }
         }
     }
 }

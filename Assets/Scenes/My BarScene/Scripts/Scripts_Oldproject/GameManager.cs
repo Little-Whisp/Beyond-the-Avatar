@@ -40,7 +40,7 @@ public class GameManager : MonoBehaviour
 
         // Reset prompt system so PromptTrigger starts from the beginning
         if (promptManager != null)
-            promptManager.ResetCategoryCycle();
+            promptManager.ResetAllPromptHistory();
 
         if (promptTrigger != null)
             promptTrigger.ResetPrompt();
@@ -51,22 +51,25 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void OnCocktailServed(string customerName, string cocktailName)
     {
-        // Ask PromptTrigger what is currently shown
-        string promptText = promptTrigger != null
-            ? promptTrigger.GetCurrentPrompt()
-            : currentPrompt;
+        if (promptManager == null)
+            return;
 
-        // Keep local copy for debugging / UI
-        currentPrompt = promptText;
+        // TEMP: simple player index (replace later with ClientId / turn system)
+        int playerIndex = 0;
+
+        string[] prompts = promptManager.GetPromptsForPlayer(playerIndex);
+
+        // Assume the first prompt is the one currently shown
+        currentPrompt = prompts.Length > 0 ? prompts[0] : "";
 
         string log = $"Served cocktail '{cocktailName}' to {customerName} | Prompt: {currentPrompt}";
         Debug.Log("[GameManager] " + log);
         LogEvent(log);
 
-        // Let the bar be ready for a NEW prompt next time Player 1 enters
         if (promptTrigger != null)
             promptTrigger.ResetPrompt();
     }
+
 
     // --------------------------------------------------------------------
     // Logging helpers (same idea as your old GameManager)

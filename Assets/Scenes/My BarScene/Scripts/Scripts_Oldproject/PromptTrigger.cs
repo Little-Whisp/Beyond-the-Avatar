@@ -2,7 +2,6 @@ using UnityEngine;
 
 public class PromptTrigger : MonoBehaviour
 {
-    public PromptManager promptManager;
     public PromptGenerator promptGenerator;
 
     public string playerTag = "Player";
@@ -10,7 +9,6 @@ public class PromptTrigger : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // Debug: log EVERY collider that enters
         Debug.Log($"[PromptTrigger] OnTriggerEnter from {other.name} (tag={other.tag})");
 
         if (!other.CompareTag(playerTag))
@@ -24,12 +22,6 @@ public class PromptTrigger : MonoBehaviour
 
         Debug.Log("[PromptTrigger] Valid player entered, showing prompt.");
 
-        if (promptManager != null)
-        {
-            string prompt = promptManager.GetNextPrompt();
-            Debug.Log("[PromptTrigger] New prompt text: " + prompt);
-        }
-
         if (promptGenerator != null)
             promptGenerator.ShowNextPrompt();
 
@@ -39,6 +31,7 @@ public class PromptTrigger : MonoBehaviour
     public void ResetPrompt()
     {
         hasShownPrompt = false;
+
         if (promptGenerator != null)
             promptGenerator.Hide();
     }

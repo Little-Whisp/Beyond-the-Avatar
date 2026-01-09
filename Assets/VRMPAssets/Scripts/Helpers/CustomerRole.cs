@@ -5,7 +5,9 @@ namespace XRMultiplayer
 {
     public class CustomerRole : MonoBehaviour
     {
+        [Header("Customer-only scene objects")]
         public GameObject[] customerOnlyObjects;
+
         bool _applied;
 
         void Update()
@@ -13,17 +15,31 @@ namespace XRMultiplayer
             if (_applied)
                 return;
 
-            if (!NetworkManager.Singleton.IsListening)
+            // Wait until Netcode is running
+            if (!NetworkManager.Singleton || !NetworkManager.Singleton.IsListening)
                 return;
 
-            // Everyone sees customer UI
-            foreach (var obj in customerOnlyObjects)
+            // CLIENT = Customer
+            if (NetworkManager.Singleton.IsServer)
             {
-                if (obj != null)
-                    obj.SetActive(true);
+                // Host must NEVER see customer objects
+                SetObjects(false);
+                _applied = true;
+                return;
             }
 
+            Debug.Log("[CustomerRole] Client detected → enabling customer objects");
+            SetObjects(true);
             _applied = true;
+        }
+
+        void SetObjects(bool state)
+        {
+            foreach (var obj in customerOnlyObjects)
+            {
+                if (obj)
+                    obj.SetActive(state);
+            }
         }
     }
 }
