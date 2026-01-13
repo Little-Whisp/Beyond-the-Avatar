@@ -5,8 +5,11 @@ namespace XRMultiplayer
 {
     public class AvatarHeadSelector : NetworkBehaviour
     {
-        [Header("Assign the 3 head model GameObjects (children under Avatar_Head)")]
+        [Header("Your 3 NEW head model GameObjects (e.g. Abstract/Cartoon/Realistic)")]
         [SerializeField] private GameObject[] headModels; // size 3
+
+        [Header("OLD/DEFAULT head objects to disable (Head meshes, old head, etc.)")]
+        [SerializeField] private GameObject[] defaultHeadObjectsToDisable;
 
         [Tooltip("If true, host/bartender will not show any of these heads.")]
         [SerializeField] private bool hideForHost = true;
@@ -20,21 +23,18 @@ namespace XRMultiplayer
 
         public override void OnNetworkSpawn()
         {
-            headIndex.OnValueChanged += (_, __) => ApplyHead();
+            headIndex.OnValueChanged += OnHeadIndexChanged;
 
             if (IsServer)
             {
-                // Host is bartender in your setup
                 bool isHost = OwnerClientId == NetworkManager.ServerClientId;
 
                 if (hideForHost && isHost)
                 {
-                    headIndex.Value = -1; // none
+                    headIndex.Value = -1;
                 }
                 else
                 {
-                    // Choose based on client id so it's stable:
-                    // client 1 -> 0, client 2 -> 1, client 3 -> 2, etc.
                     int idx = (int)((OwnerClientId - 1) % (ulong)headModels.Length);
                     headIndex.Value = Mathf.Clamp(idx, 0, headModels.Length - 1);
                 }
@@ -43,26 +43,32 @@ namespace XRMultiplayer
             ApplyHead();
         }
 
-        private void OnDestroy()
+        public override void OnNetworkDespawn()
         {
-            headIndex.OnValueChanged -= (_, __) => ApplyHead(); // safe even if not subscribed
+            headIndex.OnValueChanged -= OnHeadIndexChanged;
         }
+
+        private void OnHeadIndexChanged(int oldValue, int newValue) => ApplyHead();
 
         private void ApplyHead()
         {
-            if (headModels == null) return;
-
+            // 1) Toggle NEW heads
             for (int i = 0; i < headModels.Length; i++)
             {
                 if (headModels[i] != null)
                     headModels[i].SetActive(i == headIndex.Value);
             }
 
-            // If headIndex is -1, disable all
-            if (headIndex.Value < 0)
+            // 2) Hide OLD/default head stuff when we are showing a new head
+            bool usingNewHead = headIndex.Value >= 0;
+
+            if (defaultHeadObjectsToDisable != null)
             {
-                for (int i = 0; i < headModels.Length; i++)
-                    if (headModels[i] != null) headModels[i].SetActive(false);
+                foreach (var go in defaultHeadObjectsToDisable)
+                {
+                    if (go != null)
+                        go.SetActive(!usingNewHead); // disable old when new is active
+                }
             }
         }
     }

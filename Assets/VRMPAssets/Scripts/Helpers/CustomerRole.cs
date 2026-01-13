@@ -15,21 +15,20 @@ namespace XRMultiplayer
             if (_applied)
                 return;
 
-            // Wait until Netcode is running
             if (!NetworkManager.Singleton || !NetworkManager.Singleton.IsListening)
                 return;
 
-            // CLIENT = Customer
-            if (NetworkManager.Singleton.IsServer)
-            {
-                // Host must NEVER see customer objects
-                SetObjects(false);
-                _applied = true;
+            // 🔒 ONLY run on the local owning client
+            var netObj = GetComponentInParent<NetworkObject>();
+            if (netObj == null || !netObj.IsOwner)
                 return;
-            }
 
-            Debug.Log("[CustomerRole] Client detected → enabling customer objects");
-            SetObjects(true);
+            // Customer = non-host local player
+            bool isCustomer = !NetworkManager.Singleton.IsServer;
+
+            Debug.Log($"[CustomerRole] Local player → Customer={isCustomer}");
+
+            SetObjects(isCustomer);
             _applied = true;
         }
 

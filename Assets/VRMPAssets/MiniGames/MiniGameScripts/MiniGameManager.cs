@@ -494,8 +494,15 @@ namespace XRMultiplayer.MiniGames
         void AddPlayerOwnerRpc(ulong clientId)
         {
             AddPlayerRpc(clientId);
+
             if (m_QueuedUpPlayers.Count < maxAllowedPlayers)
                 m_QueuedUpPlayers.Add(clientId);
+
+            // ✅ NEW: start immediately if this is the first player
+            if (m_QueuedUpPlayers.Count == 1)
+            {
+                StartGameOwnerRpc();
+            }
         }
 
         [Rpc(SendTo.Everyone)]
