@@ -24,7 +24,6 @@ public class ShakerResetOnFloor : MonoBehaviour
             // Empty the shaker + reset states so player can start over
             shaker.Clear();
             shaker.IsSealed = false;   // lid considered off after a fall
-            shaker.IsCapped = true;    // cap back on by default (optional)
         }
     }
 }

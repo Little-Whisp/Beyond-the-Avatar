@@ -17,12 +17,24 @@ public class TriggerZone : MonoBehaviour
     [Header("Visual (Highlight)")]
     public GameObject zoneVisual;
 
+    [Header("Avatar Image (optional)")]
+    public GameObject avatarImageVisual;   // assign a world-space image object here (per zone)
+
+    [Header("Serve VFX (local)")]
+    public GameObject servePoofVfx;
+    public float destroyDelay = 0f;
+
     public Transform glassAnchor;
 
     private GameObject lastPlacedGlass;
-
     private bool _occupied;
 
+    [Header("Avatar Choice Spot")]
+    public bool isAvatarChoiceSpot = false; // enable only on 3 table spots
+    public AvatarType avatarType = AvatarType.Realistic;
+
+    [HideInInspector]
+    public BartenderPromptSession session;
 
     private void Awake()
     {
@@ -45,6 +57,9 @@ public class TriggerZone : MonoBehaviour
         if (zoneVisual != null)
             zoneVisual.SetActive(false);
 
+        if (avatarImageVisual != null)
+            avatarImageVisual.SetActive(false);
+
         var ps = GetComponentsInChildren<ParticleSystem>(true);
         foreach (var p in ps)
         {
@@ -53,7 +68,6 @@ public class TriggerZone : MonoBehaviour
         }
     }
 
-    // NOTE: Only runs if this inherits NetworkBehaviour (it doesn't right now)
     private void OnNetworkSpawn()
     {
         ForceHide();
@@ -88,13 +102,78 @@ public class TriggerZone : MonoBehaviour
         if (grab && grab.isSelected)
             return;
 
+        // _occupied = true;
+        // HandleGlassPlacement(go);
+        StartCoroutine(DelayedPlacement(go));
+    }
+
+    private System.Collections.IEnumerator DelayedPlacement(GameObject go)
+    {
+        yield return null; // wait one frame
+
+        var grab = go.GetComponentInChildren<XRGrabInteractable>(true);
+        if (grab && grab.isSelected)
+        {
+            _occupied = false;
+            yield break;
+        }
+
         _occupied = true;
         HandleGlassPlacement(go);
     }
 
+    // ✅ NEW helper: spawns poof + destroys the cocktail root
+    private void PoofAndDestroyDrink(GameObject glass)
+    {
+        Debug.Log($"[TriggerZone] PoofAndDestroyDrink CALLED for {glass.name}");
+
+        Vector3 poofPos = glassAnchor != null
+            ? glassAnchor.position
+            : glass.transform.position;
+
+        // 🔴 Disable GlassPickup FIRST
+        var pickup = glass.GetComponent<GlassPickup>();
+        if (pickup != null)
+        {
+            pickup.enabled = false;
+        }
+
+        // 🔴 Disable grabbing
+        var grab = glass.GetComponentInChildren<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
+        if (grab != null)
+        {
+            grab.enabled = false;
+        }
+
+        // 🔴 Disable physics
+        var rb = glass.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.isKinematic = true;
+            rb.useGravity = false;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
+        // 🔴 Disable collider
+        var col = glass.GetComponent<Collider>();
+        if (col != null)
+            col.enabled = false;
+
+        // 🔵 Spawn 
+        if (servePoofVfx != null)
+            Instantiate(servePoofVfx, poofPos, Quaternion.identity);
+
+        Debug.Log($"[TriggerZone] Destroying {glass.name} at time {Time.time}");
+
+        Destroy(glass);
+    }
 
     private void HandleGlassPlacement(GameObject glass)
     {
+
+        Debug.Log($"[TriggerZone] HandleGlassPlacement START for {glass.name}");
+
         lastPlacedGlass = glass;
 
         if (glassAnchor != null)
@@ -106,18 +185,33 @@ public class TriggerZone : MonoBehaviour
         var rb = glass.GetComponent<Rigidbody>();
         if (rb != null)
         {
-            // ✅ lock briefly so it "snaps" cleanly
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
             rb.isKinematic = true;
             rb.useGravity = false;
 
-            // ✅ IMPORTANT: release physics again so it can be grabbed normally
-            // (matches how your other bar items behave)
-            StartCoroutine(ReleasePhysicsNextFrame(rb));
+            // StartCoroutine(ReleasePhysicsNextFrame(rb));
         }
 
         ForceHide();
+
+        // ✅ If this is an avatar choice spot, keep your host-only logic
+        if (isAvatarChoiceSpot)
+        {
+            PoofAndDestroyDrink(glass);
+
+            session?.LocalAdvanceAfterServe(avatarType);
+
+            promptTrigger?.promptGenerator?.ShowNextPrompt();
+
+            _occupied = false;
+            return;
+        }
+
+
+        // --- Legacy flow (non-choice zones) ---
+        // ✅ ALSO: poof + destroy cocktail here
+        PoofAndDestroyDrink(glass);
 
         string owner = playerBase != null ? playerBase.assignedPlayerName : "Unknown";
         string avatar = playerBase != null ? playerBase.assignedAvatarType : "Unknown";
@@ -129,12 +223,16 @@ public class TriggerZone : MonoBehaviour
             $"Served -> Player: {owner} | Avatar: {avatar} | Prompt: {prompt}"
         );
 
+        // promptTrigger?.ResetPrompt();
         promptTrigger?.ResetPrompt();
+        promptTrigger?.promptGenerator?.ShowNextPrompt();
+
+
+        _occupied = false;
     }
 
     private System.Collections.IEnumerator ReleasePhysicsNextFrame(Rigidbody rb)
     {
-        // wait a frame so the snap transform settles
         yield return null;
 
         if (!rb) yield break;
@@ -151,6 +249,9 @@ public class TriggerZone : MonoBehaviour
 
         zoneVisual.SetActive(true);
 
+        if (avatarImageVisual != null)
+            avatarImageVisual.SetActive(true);
+
         var ps = zoneVisual.GetComponentsInChildren<ParticleSystem>(true);
         foreach (var p in ps)
         {
@@ -162,5 +263,10 @@ public class TriggerZone : MonoBehaviour
     public void HideHighlight()
     {
         ForceHide();
+    }
+
+    public void SetSession(BartenderPromptSession s)
+    {
+        session = s;
     }
 }

@@ -186,6 +186,8 @@ public class GlassPickup : MonoBehaviour
 
     private IEnumerator ForceNonKinematicNextPhysicsTick()
     {
+        Debug.Log($"[GlassPickup] Re-enabling physics on {name} at time {Time.time}");
+
         yield return new WaitForFixedUpdate();
         if (!rb) yield break;
 
@@ -196,5 +198,11 @@ public class GlassPickup : MonoBehaviour
         rb.angularVelocity = Vector3.zero;
     }
 
-    
+    private void OnDestroy()
+    {
+        Debug.Log($"[GlassPickup] {name} WAS DESTROYED at time {Time.time}");
+    }
+
+
+
 }

@@ -35,9 +35,9 @@ public class ShakerHUD : MonoBehaviour
         // Set bar colors from the palette (optional)
         if (palette)
         {
-            if (barOld)  barOld.color  = palette.oldTwitter;
+            if (barOld) barOld.color = palette.oldTwitter;
             if (barLife) barLife.color = palette.lifeJacket;
-            if (barImp)  barImp.color  = palette.imposter;
+            if (barImp) barImp.color = palette.imposter;
         }
     }
 
@@ -51,9 +51,9 @@ public class ShakerHUD : MonoBehaviour
     public void SetValues(float mlOld, float mlLife, float mlImp, float capacity)
     {
         float cap = Mathf.Max(0.0001f, capacity);
-        if (barOld)  barOld.fillAmount  = Mathf.Clamp01(mlOld  / cap);
+        if (barOld) barOld.fillAmount = Mathf.Clamp01(mlOld / cap);
         if (barLife) barLife.fillAmount = Mathf.Clamp01(mlLife / cap);
-        if (barImp)  barImp.fillAmount  = Mathf.Clamp01(mlImp  / cap);
+        if (barImp) barImp.fillAmount = Mathf.Clamp01(mlImp / cap);
 
 #if TMP_PRESENT
         if (mlOldTxt)  mlOldTxt.text  = $"{mlOld:0} ml";

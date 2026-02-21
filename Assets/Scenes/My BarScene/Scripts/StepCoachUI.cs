@@ -41,12 +41,12 @@ public class StepCoachUI : MonoBehaviour
     public float outlineWidth = 6f;
 
     // Cache original layers to restore later (layer-based mode)
-    private readonly Dictionary<GameObject,int> _originalLayers = new();
+    private readonly Dictionary<GameObject, int> _originalLayers = new();
 
     enum Step { Pour, Mix, Serve }
     Step step;
 
-    void OnEnable()  { ResetBus.OnReset += OnReset; }
+    void OnEnable() { ResetBus.OnReset += OnReset; }
     void OnDisable() { ResetBus.OnReset -= OnReset; }
 
     void Start()
@@ -61,7 +61,7 @@ public class StepCoachUI : MonoBehaviour
 
         Step target =
             (!shaker.HasLiquid || !shaker.IsFull) ? Step.Pour :
-            (!shaker.mixed)                        ? Step.Mix  :
+            (!shaker.mixed) ? Step.Mix :
                                                       Step.Serve;
 
         if (step != target)
@@ -74,11 +74,11 @@ public class StepCoachUI : MonoBehaviour
                 SetResetTipVisible(false);
                 break;
             case Step.Mix:
-                ShowHint(shaker.IsSealed && shaker.IsCapped ? "Shake to mix" : "Seal lid + cap");
+                ShowHint(shaker.IsSealed ? "Shake to mix" : "Seal lid");
                 SetResetTipVisible(true);
                 break;
             case Step.Serve:
-                ShowHint(shaker.IsCapped ? "Remove cap" : "Pour into glass");
+                ShowHint("Pour into glass");
                 SetResetTipVisible(true);
                 break;
         }
@@ -102,8 +102,8 @@ public class StepCoachUI : MonoBehaviour
     string DefaultHintFor(Step s) => s switch
     {
         Step.Pour => "Pour flavour",
-        Step.Mix  => "Seal & shake",
-        _         => "Uncap & pour"
+        Step.Mix => "Seal & shake",
+        _ => "Uncap & pour"
     };
 
     // ================== HIGHLIGHT LOGIC ==================
@@ -115,8 +115,8 @@ public class StepCoachUI : MonoBehaviour
         // 2) Enable highlights for this step
         GameObject[] targets = s switch
         {
-            Step.Pour  => pourTargets,
-            Step.Mix   => mixTargets,
+            Step.Pour => pourTargets,
+            Step.Mix => mixTargets,
             Step.Serve => serveTargets,
             _ => null
         };
@@ -159,7 +159,7 @@ public class StepCoachUI : MonoBehaviour
 
                 if (qo)
                 {
-                    qo.OutlineMode  = outlineMode;
+                    qo.OutlineMode = outlineMode;
                     qo.OutlineColor = outlineColor;
                     qo.OutlineWidth = outlineWidth;
                     qo.enabled = true;
@@ -180,7 +180,7 @@ public class StepCoachUI : MonoBehaviour
                         try
                         {
                             var q = (global::Outline)child;
-                            q.OutlineMode  = outlineMode;
+                            q.OutlineMode = outlineMode;
                             q.OutlineColor = outlineColor;
                             q.OutlineWidth = outlineWidth;
                         }

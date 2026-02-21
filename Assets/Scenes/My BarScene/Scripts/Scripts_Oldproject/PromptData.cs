@@ -9,6 +9,7 @@ public class PromptResult
     public string avatarTag;
     public string timestamp;
     public string playerID;
+    public int roundIndex;
 }
 
 [Serializable]

@@ -28,7 +28,7 @@ public class ShakerMixController : MonoBehaviour
     {
         if (!rb || !container) return;
 
-        // Only allowed to mix when sealed + capped
+        // Only allowed to mix when sealed 
         if (!container.CanMix) { SetMixing(false); return; }
 
         IsShaking = rb.linearVelocity.magnitude > linearSpeed ||

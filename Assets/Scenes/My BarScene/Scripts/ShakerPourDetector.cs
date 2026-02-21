@@ -42,7 +42,6 @@ public class ShakerPourDetector : MonoBehaviour
 
         // ----- Rules
         bool okSeal  = !requireSealedLid || shaker.IsSealed;
-        bool okCap   = !requireUncapped  || !shaker.IsCapped;
         bool okMixed = !requireMixed     || shaker.mixed;
 
         // Tilt with hysteresis
@@ -51,7 +50,7 @@ public class ShakerPourDetector : MonoBehaviour
         bool tiltStop  = tilt < (pourThreshold - hysteresis);
         bool tiltOk    = isPouring ? !tiltStop : tiltStart;
 
-        bool shouldPour = okSeal && okCap && okMixed && tiltOk;
+        bool shouldPour = okSeal && okMixed && tiltOk;
 
         if (isPouring != shouldPour)
         {
@@ -69,8 +68,6 @@ public class ShakerPourDetector : MonoBehaviour
 
     void StartPour()
     {
-        Debug.Log("SHAKER StartPour. Sealed="+shaker.IsSealed+" Capped="+shaker.IsCapped+" Mixed="+shaker.mixed+" Origin="+(origin?origin.name:"NULL"));
-
         var go = Instantiate(streamPrefab, origin.position, Quaternion.identity, transform);
         current = go.GetComponent<PourStream>();
         if (!current) { Debug.LogError("Stream prefab missing PourStream component."); return; }

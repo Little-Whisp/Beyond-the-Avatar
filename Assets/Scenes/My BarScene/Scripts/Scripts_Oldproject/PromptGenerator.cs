@@ -13,6 +13,8 @@ public class PromptGenerator : MonoBehaviour
 
     public void ShowNextPrompt()
     {
+        Debug.Log("ShowNextPrompt CALLED");
+
         if (promptManager == null || promptText == null)
             return;
 

@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using Unity.Netcode;
 
 public class GlassResultReceiver : MonoBehaviour
 {
@@ -14,6 +15,8 @@ public class GlassResultReceiver : MonoBehaviour
 
     [Header("Spawn Decorator")]
     public SpawnDecorator decorator;
+
+    public static System.Action<GameObject> OnCocktailSpawned;
 
     float mlOld, mlLife, mlImp;
 
@@ -51,6 +54,8 @@ public class GlassResultReceiver : MonoBehaviour
 
         // 3) Make grabbable ONCE
         FindObjectOfType<ShakerContainer>()?.MakeCocktailGrabbable(drink);
+
+        OnCocktailSpawned?.Invoke(drink);
 
         if (poofVfx)
         {

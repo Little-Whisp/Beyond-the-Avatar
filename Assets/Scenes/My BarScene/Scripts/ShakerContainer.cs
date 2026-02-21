@@ -3,7 +3,6 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 public class ShakerContainer : MonoBehaviour
 {
-
     [Header("Cocktail Spawning (Test Only)")]
     public CocktailBook cocktailBook;
     public Transform spawnPoint;
@@ -30,7 +29,6 @@ public class ShakerContainer : MonoBehaviour
 
     [Header("State (for pour rules)")]
     public bool IsSealed;                     // lid snapped on/off
-    public bool IsCapped;                     // spout cap on/off (if used)
 
     // ✅ NEW: Audio settings
     [Header("Audio")]
@@ -68,7 +66,7 @@ public class ShakerContainer : MonoBehaviour
 
     public float TotalMl => mlOld + mlLife + mlImp;
     public bool IsFull => TotalMl >= capacityMl - 0.01f;
-    public bool CanMix => IsSealed && IsCapped;
+    public bool CanMix => IsSealed;
 
     // ---------- Adding liquid from bottles ----------
     public void AddFlavor(Flavor f, float ml)
@@ -225,7 +223,6 @@ public class ShakerContainer : MonoBehaviour
         pickup.triggerZones = FindObjectsOfType<TriggerZone>();
     }
 
-
 #if UNITY_EDITOR
     void OnValidate()
     {
@@ -278,7 +275,6 @@ public class ShakerContainer : MonoBehaviour
 
         MakeCocktailGrabbable(newCocktail);
 
-
         // ⭐ Add physics (in case prefab lacks them)
         // var rb = newCocktail.GetComponent<Rigidbody>();
         // if (rb == null) rb = newCocktail.AddComponent<Rigidbody>();
@@ -299,9 +295,6 @@ public class ShakerContainer : MonoBehaviour
 
         // // ⭐ Assign trigger zones (needed for highlights)
         // pickup.triggerZones = FindObjectsOfType<TriggerZone>();
-
-        Debug.Log("Spawned test cocktail: " + newCocktail.name);
     }
-
 #endif
 }

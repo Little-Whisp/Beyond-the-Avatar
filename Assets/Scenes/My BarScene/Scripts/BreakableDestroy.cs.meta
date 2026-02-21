@@ -1,2 +1,15 @@
 fileFormatVersion: 2
 guid: be046b4ede3c38149bd97eda768085c4
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - breakShardsPrefab: {instanceID: 0}
+  - poofPrefab: {fileID: 9157105887711914197, guid: c4f829cb7dd4b864caf8832ec5b1ee55,
+      type: 3}
+  - breakClip: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

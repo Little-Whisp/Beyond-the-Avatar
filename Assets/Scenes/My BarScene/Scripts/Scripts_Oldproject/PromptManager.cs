@@ -4,8 +4,6 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "PromptManager", menuName = "ScriptableObjects/PromptManager", order = 1)]
 public class PromptManager : ScriptableObject
 {
-    [TextArea] public List<string> agencyPrompts;
-    [TextArea] public List<string> experiencePrompts;
     [TextArea] public List<string> prosocialPrompts;
     [TextArea] public List<string> antisocialPrompts;
 
@@ -16,16 +14,12 @@ public class PromptManager : ScriptableObject
     {
         categories = new Dictionary<string, List<string>>()
         {
-            { "Agency", agencyPrompts },
-            { "Experience", experiencePrompts },
             { "Prosocial", prosocialPrompts },
             { "Antisocial", antisocialPrompts }
         };
 
         usedIndicesPerCategory = new Dictionary<string, List<int>>()
         {
-            { "Agency", new List<int>() },
-            { "Experience", new List<int>() },
             { "Prosocial", new List<int>() },
             { "Antisocial", new List<int>() }
         };

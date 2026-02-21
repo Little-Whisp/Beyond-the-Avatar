@@ -265,7 +265,9 @@ namespace XRMultiplayer.MiniGames
             }
             else
             {
-                m_DynamicButton.button.interactable = false;
+                // Allow late-join while the game is running
+                m_DynamicButton.button.interactable = true;
+                m_DynamicButton.UpdateButton(AddLocalPlayer, "Join");
             }
 
             currentMiniGame.StartGame();
@@ -330,6 +332,19 @@ namespace XRMultiplayer.MiniGames
                 }
             }
         }
+
+        [Rpc(SendTo.Everyone)]
+        void JoinRejectedRpc(ulong rejectedClientId)
+        {
+            // Only the rejected client should re-enable their join button
+            if (NetworkManager.Singleton.LocalClientId != rejectedClientId)
+                return;
+
+            if (!LocalPlayerInGame && m_DynamicButton != null && m_DynamicButton.button != null)
+                m_DynamicButton.button.interactable = true;
+        }
+
+
 
         [Rpc(SendTo.Everyone)]
         void TogglePlayerReadyRpc(ulong clientId, bool isReady)
@@ -493,22 +508,64 @@ namespace XRMultiplayer.MiniGames
         [Rpc(SendTo.Owner)]
         void AddPlayerOwnerRpc(ulong clientId)
         {
+            // Prevent double-join
+            // Prevent double-join
+            if (m_CurrentPlayers.Contains(clientId) || m_QueuedUpPlayers.Contains(clientId))
+            {
+                JoinRejectedRpc(clientId);
+
+                return;
+            }
+
+            int totalPlayers = currentPlayerDictionary.Count;
+            if (totalPlayers >= maxAllowedPlayers)
+            {
+                JoinRejectedRpc(clientId);
+
+                return;
+            }
+
+            // Tell everyone to add/update UI + local teleport
             AddPlayerRpc(clientId);
 
-            if (m_QueuedUpPlayers.Count < maxAllowedPlayers)
+            if (networkedGameState.Value == GameState.InGame)
+            {
+                // Late join: add to active players immediately
+                m_CurrentPlayers.Add(clientId);
+                // m_CurrentPlayers.OnListChanged will rebuild the list/slots
+            }
+            else
+            {
+                // PreGame: add to queue
                 m_QueuedUpPlayers.Add(clientId);
 
-            // ✅ NEW: start immediately if this is the first player
-            if (m_QueuedUpPlayers.Count == 1)
-            {
-                StartGameOwnerRpc();
+                // Start immediately when first player joins
+                if (m_QueuedUpPlayers.Count == 1)
+                    StartGameOwnerRpc();
             }
         }
+
+        //Template AddPlayerOwnerRPC
+        // [Rpc(SendTo.Owner)]
+        // void AddPlayerOwnerRpc(ulong clientId)
+        // {
+        //     AddPlayerRpc(clientId);
+
+        //     if (m_QueuedUpPlayers.Count < maxAllowedPlayers)
+        //         m_QueuedUpPlayers.Add(clientId);
+
+        //     // ✅ NEW: start immediately if this is the first player
+        //     if (m_QueuedUpPlayers.Count == 1)
+        //     {
+        //         StartGameOwnerRpc();
+        //     }
+        // }
 
         [Rpc(SendTo.Everyone)]
         void AddPlayerRpc(ulong clientId)
         {
-            if (currentPlayerDictionary.Count < maxAllowedPlayers)
+            int totalPlayers = currentPlayerDictionary.Count;
+            if (totalPlayers < maxAllowedPlayers)
             {
                 if (networkedGameState.Value != GameState.PostGame)
                     AddPlayerToList(clientId);
@@ -518,7 +575,7 @@ namespace XRMultiplayer.MiniGames
                     m_LocalPlayerInGame = true;
                     m_TeleportZonesObject.SetActive(true);
                     // Hide or disable the button after joining
-                    m_DynamicButton.button.gameObject.SetActive(false);
+                    m_DynamicButton.button.interactable = false;
                     // Alternatively, if you want to just disable interaction:
                     // m_DynamicButton.button.interactable = false;
 
@@ -536,7 +593,8 @@ namespace XRMultiplayer.MiniGames
                     PlayerHudNotification.Instance.ShowText($"Joined {currentMiniGame.gameName}");
                 }
 
-                if (currentPlayerDictionary.Count >= maxAllowedPlayers & !LocalPlayerInGame && networkedGameState.Value != GameState.PostGame)
+                int newTotalPlayers = currentPlayerDictionary.Count;
+                if (newTotalPlayers >= maxAllowedPlayers && !LocalPlayerInGame && networkedGameState.Value != GameState.PostGame)
                     m_DynamicButton.button.interactable = false;
             }
         }

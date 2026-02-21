@@ -430,7 +430,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3855888323
+  GlobalObjectIdHash: 1795334012
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 0
@@ -692,9 +692,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::XRMultiplayer.AvatarHeadSelector
   ShowTopMostFoldoutHeaderGroup: 1
   headModels:
-  - {fileID: 2277972525579045274}
-  - {fileID: 6406284496185637658}
   - {fileID: 4141769932409106612}
+  - {fileID: 6406284496185637658}
+  - {fileID: 2277972525579045274}
   defaultHeadObjectsToDisable:
   - {fileID: 8766417716020055518}
   hideForHost: 1

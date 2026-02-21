@@ -52,7 +52,7 @@ namespace Kino
             _threshold = bloom.thresholdLinear;
             _knee = bloom.softKnee * _threshold + 1e-5f;
 
-            // Intensity is capped to prevent sampling errors.
+
             _intensity = Mathf.Min(bloom.intensity, 10);
         }
 
