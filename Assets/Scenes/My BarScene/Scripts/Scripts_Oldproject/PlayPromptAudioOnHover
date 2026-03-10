@@ -1,0 +1,24 @@
+using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit;
+
+[RequireComponent(typeof(XRSimpleInteractable))]
+public class PlayPromptAudioOnHover : MonoBehaviour
+{
+    public PromptGenerator promptGenerator;
+    public float cooldown = 0.8f;
+    float _last;
+
+    void Awake()
+    {
+        GetComponent<XRSimpleInteractable>().hoverEntered.AddListener(OnHoverEntered);
+    }
+
+    void OnHoverEntered(HoverEnterEventArgs args)
+    {
+        if (!promptGenerator) return;
+        if (Time.time - _last < cooldown) return;
+        _last = Time.time;
+
+        promptGenerator.PlayPromptAudio();
+    }
+}
