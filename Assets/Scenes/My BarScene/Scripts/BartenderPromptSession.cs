@@ -177,7 +177,6 @@ public class BartenderPromptSession : NetworkBehaviour
             });
         }
 
-        // Move to next round
         roundIndex++;
 
         if (roundIndex >= sessionPrompts.Count)

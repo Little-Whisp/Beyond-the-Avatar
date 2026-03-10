@@ -6,13 +6,11 @@ public class TriggerZone : MonoBehaviour
 {
     [Header("Basic Settings")]
     public bool isGlassZone = true;
+
     public string drinkTag = "Cocktail";
 
     [Header("Prompt System")]
     public PromptTrigger promptTrigger;
-
-    [Header("Player Base (dynamic)")]
-    public PlayerBaseTrigger playerBase;
 
     [Header("Visual (Highlight)")]
     public GameObject zoneVisual;
@@ -22,6 +20,7 @@ public class TriggerZone : MonoBehaviour
 
     [Header("Serve VFX (local)")]
     public GameObject servePoofVfx;
+
     public float destroyDelay = 0f;
 
     public Transform glassAnchor;
@@ -30,7 +29,9 @@ public class TriggerZone : MonoBehaviour
     private bool _occupied;
 
     [Header("Avatar Choice Spot")]
+
     public bool isAvatarChoiceSpot = false; // enable only on 3 table spots
+
     public AvatarType avatarType = AvatarType.Realistic;
 
     [HideInInspector]
@@ -102,9 +103,8 @@ public class TriggerZone : MonoBehaviour
         if (grab && grab.isSelected)
             return;
 
-        // _occupied = true;
-        // HandleGlassPlacement(go);
         StartCoroutine(DelayedPlacement(go));
+
     }
 
     private System.Collections.IEnumerator DelayedPlacement(GameObject go)
@@ -117,12 +117,11 @@ public class TriggerZone : MonoBehaviour
             _occupied = false;
             yield break;
         }
-
         _occupied = true;
         HandleGlassPlacement(go);
     }
 
-    // ✅ NEW helper: spawns poof + destroys the cocktail root
+    //NEW helper: spawns poof + destroys the cocktail root
     private void PoofAndDestroyDrink(GameObject glass)
     {
         Debug.Log($"[TriggerZone] PoofAndDestroyDrink CALLED for {glass.name}");
@@ -155,14 +154,22 @@ public class TriggerZone : MonoBehaviour
             rb.angularVelocity = Vector3.zero;
         }
 
-        // 🔴 Disable collider
+        // Disable collider
         var col = glass.GetComponent<Collider>();
         if (col != null)
             col.enabled = false;
 
-        // 🔵 Spawn 
+        // Spawn 
         if (servePoofVfx != null)
-            Instantiate(servePoofVfx, poofPos, Quaternion.identity);
+        {
+            Debug.Log("POOF SPAWNED");
+
+            GameObject vfx = Instantiate(servePoofVfx, poofPos, Quaternion.identity);
+
+            var ps = vfx.GetComponentInChildren<ParticleSystem>();
+            if (ps != null)
+                ps.Play();
+        }
 
         Debug.Log($"[TriggerZone] Destroying {glass.name} at time {Time.time}");
 
@@ -189,44 +196,42 @@ public class TriggerZone : MonoBehaviour
             rb.angularVelocity = Vector3.zero;
             rb.isKinematic = true;
             rb.useGravity = false;
-
-            // StartCoroutine(ReleasePhysicsNextFrame(rb));
         }
 
         ForceHide();
 
-        // ✅ If this is an avatar choice spot, keep your host-only logic
         if (isAvatarChoiceSpot)
         {
             PoofAndDestroyDrink(glass);
 
             session?.LocalAdvanceAfterServe(avatarType);
 
-            promptTrigger?.promptGenerator?.ShowNextPrompt();
+            if (promptTrigger?.promptGenerator != null)
+            {
+                if (promptTrigger.promptGenerator.HasMorePromptsInCurrentPair())
+                    promptTrigger.promptGenerator.ShowNextPrompt();
+                else
+                    promptTrigger.promptGenerator.Hide();
+            }
 
             _occupied = false;
             return;
         }
 
-
-        // --- Legacy flow (non-choice zones) ---
-        // ✅ ALSO: poof + destroy cocktail here
+        // Poof + destroy cocktail here
         PoofAndDestroyDrink(glass);
 
-        string owner = playerBase != null ? playerBase.assignedPlayerName : "Unknown";
-        string avatar = playerBase != null ? playerBase.assignedAvatarType : "Unknown";
         string prompt = promptTrigger?.promptGenerator?.currentPrompt ?? "UnknownPrompt";
 
-        Debug.Log($"[DATA] Player: {owner} | Avatar: {avatar} | Prompt: {prompt}");
-
-        GameManager.Instance?.LogEvent(
-            $"Served -> Player: {owner} | Avatar: {avatar} | Prompt: {prompt}"
-        );
-
-        // promptTrigger?.ResetPrompt();
         promptTrigger?.ResetPrompt();
-        promptTrigger?.promptGenerator?.ShowNextPrompt();
 
+        if (promptTrigger?.promptGenerator != null)
+        {
+            if (promptTrigger.promptGenerator.HasMorePromptsInCurrentPair())
+                promptTrigger.promptGenerator.ShowNextPrompt();
+            else
+                promptTrigger.promptGenerator.Hide();
+        }
 
         _occupied = false;
     }

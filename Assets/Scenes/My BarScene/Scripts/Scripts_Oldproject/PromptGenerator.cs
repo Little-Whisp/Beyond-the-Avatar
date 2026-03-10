@@ -6,12 +6,16 @@ public class PromptGenerator : MonoBehaviour
     public TextMeshProUGUI promptText;
     public PromptManager promptManager;
 
-    public int playerIndex;
+    [Header("Audio")]
+    public AudioSource promptAudioSource;
+    public AudioClip[] promptClips;
 
+    public int playerIndex;
     public string currentPrompt;
 
     private string[] currentPrompts;
     private int currentPromptIndex = 0;
+    private int currentDisplayedClipIndex = -1;
 
     public void ShowNextPrompt()
     {
@@ -20,7 +24,6 @@ public class PromptGenerator : MonoBehaviour
         if (promptManager == null || promptText == null)
             return;
 
-        // If we don't have prompts yet OR finished the pair
         if (currentPrompts == null || currentPromptIndex >= currentPrompts.Length)
         {
             currentPrompts = promptManager.GetPromptsForPlayer(playerIndex);
@@ -31,14 +34,46 @@ public class PromptGenerator : MonoBehaviour
         promptText.text = currentPrompt;
         gameObject.SetActive(true);
 
-        Debug.Log($"Showing prompt: {currentPrompt}");
+        currentDisplayedClipIndex = currentPromptIndex;
+        PlayAudio();
 
         currentPromptIndex++;
+    }
+
+    void PlayAudio()
+    {
+        if (promptAudioSource == null || promptClips == null)
+            return;
+
+        if (currentDisplayedClipIndex < 0 || currentDisplayedClipIndex >= promptClips.Length)
+            return;
+
+        AudioClip clip = promptClips[currentDisplayedClipIndex];
+        if (clip == null)
+            return;
+
+        promptAudioSource.Stop();
+        promptAudioSource.clip = clip;
+        promptAudioSource.Play();
+    }
+
+    public bool HasMorePromptsInCurrentPair()
+    {
+        return currentPrompts != null && currentPromptIndex < currentPrompts.Length;
     }
 
     public void Hide()
     {
         currentPrompt = "";
+
+        if (promptText != null)
+            promptText.text = "";
+
+        if (promptAudioSource != null && promptAudioSource.isPlaying)
+            promptAudioSource.Stop();
+
+        currentDisplayedClipIndex = -1;
+
         gameObject.SetActive(false);
     }
 }
