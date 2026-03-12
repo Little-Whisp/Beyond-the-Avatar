@@ -1,12 +1,9 @@
 using UnityEngine;
-using UnityEngine.XR.Interaction.Toolkit.Interactables;
-using Unity.Netcode;
 
 public class TriggerZone : MonoBehaviour
 {
     [Header("Basic Settings")]
     public bool isGlassZone = true;
-
     public string drinkTag = "Cocktail";
 
     [Header("Prompt System")]
@@ -14,28 +11,19 @@ public class TriggerZone : MonoBehaviour
 
     [Header("Visual (Highlight)")]
     public GameObject zoneVisual;
-
-    [Header("Avatar Image (optional)")]
-    public GameObject avatarImageVisual;   // assign a world-space image object here (per zone)
+    public GameObject avatarImageVisual;
 
     [Header("Serve VFX (local)")]
     public GameObject servePoofVfx;
 
-    public float destroyDelay = 0f;
-
-    public Transform glassAnchor;
-
-    private GameObject lastPlacedGlass;
-    private bool _occupied;
-
     [Header("Avatar Choice Spot")]
-
-    public bool isAvatarChoiceSpot = false; // enable only on 3 table spots
-
+    public bool isAvatarChoiceSpot = false;
     public AvatarType avatarType = AvatarType.Realistic;
 
     [HideInInspector]
     public BartenderPromptSession session;
+
+    private bool _triggered = false;
 
     private void Awake()
     {
@@ -45,6 +33,7 @@ public class TriggerZone : MonoBehaviour
     private void OnEnable()
     {
         ForceHide();
+        _triggered = false;
     }
 
     private void Start()
@@ -69,15 +58,10 @@ public class TriggerZone : MonoBehaviour
         }
     }
 
-    private void OnNetworkSpawn()
-    {
-        ForceHide();
-    }
-
     private void OnTriggerEnter(Collider other)
     {
-        if (_occupied) return;
         if (!isGlassZone) return;
+        if (_triggered) return;
 
         var go = other.attachedRigidbody
             ? other.attachedRigidbody.gameObject
@@ -85,167 +69,55 @@ public class TriggerZone : MonoBehaviour
 
         if (!go.CompareTag(drinkTag)) return;
 
-        lastPlacedGlass = go;
-    }
+        _triggered = true;
 
-    private void OnTriggerStay(Collider other)
-    {
-        if (_occupied) return;
-        if (!isGlassZone) return;
-
-        var go = other.attachedRigidbody
-            ? other.attachedRigidbody.gameObject
-            : other.gameObject;
-
-        if (!go.CompareTag(drinkTag)) return;
-
-        var grab = go.GetComponentInChildren<XRGrabInteractable>(true);
-        if (grab && grab.isSelected)
-            return;
-
-        StartCoroutine(DelayedPlacement(go));
-
-    }
-
-    private System.Collections.IEnumerator DelayedPlacement(GameObject go)
-    {
-        yield return null; // wait one frame
-
-        var grab = go.GetComponentInChildren<XRGrabInteractable>(true);
-        if (grab && grab.isSelected)
-        {
-            _occupied = false;
-            yield break;
-        }
-        _occupied = true;
-        HandleGlassPlacement(go);
-    }
-
-    //NEW helper: spawns poof + destroys the cocktail root
-    private void PoofAndDestroyDrink(GameObject glass)
-    {
-        Debug.Log($"[TriggerZone] PoofAndDestroyDrink CALLED for {glass.name}");
-
-        Vector3 poofPos = glassAnchor != null
-            ? glassAnchor.position
-            : glass.transform.position;
-
-        // 🔴 Disable GlassPickup FIRST
-        var pickup = glass.GetComponent<GlassPickup>();
-        if (pickup != null)
-        {
-            pickup.enabled = false;
-        }
-
-        // 🔴 Disable grabbing
-        var grab = glass.GetComponentInChildren<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
-        if (grab != null)
-        {
-            grab.enabled = false;
-        }
-
-        // 🔴 Disable physics
-        var rb = glass.GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.isKinematic = true;
-            rb.useGravity = false;
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-        }
-
-        // Disable collider
-        var col = glass.GetComponent<Collider>();
-        if (col != null)
-            col.enabled = false;
-
-        // Spawn 
-        if (servePoofVfx != null)
-        {
-            Debug.Log("POOF SPAWNED");
-
-            GameObject vfx = Instantiate(servePoofVfx, poofPos, Quaternion.identity);
-
-            var ps = vfx.GetComponentInChildren<ParticleSystem>();
-            if (ps != null)
-                ps.Play();
-        }
-
-        Debug.Log($"[TriggerZone] Destroying {glass.name} at time {Time.time}");
-
-        Destroy(glass);
-    }
-
-    private void HandleGlassPlacement(GameObject glass)
-    {
-
-        Debug.Log($"[TriggerZone] HandleGlassPlacement START for {glass.name}");
-
-        lastPlacedGlass = glass;
-
-        if (glassAnchor != null)
-        {
-            glass.transform.position = glassAnchor.position;
-            glass.transform.rotation = glassAnchor.rotation;
-        }
-
-        var rb = glass.GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-            rb.isKinematic = true;
-            rb.useGravity = false;
-        }
+        Debug.Log("[TriggerZone] Drink detected");
 
         ForceHide();
 
-        if (isAvatarChoiceSpot)
+        if (servePoofVfx != null)
         {
-            PoofAndDestroyDrink(glass);
-
-            session?.LocalAdvanceAfterServe(avatarType);
-
-            if (promptTrigger?.promptGenerator != null)
-            {
-                if (promptTrigger.promptGenerator.HasMorePromptsInCurrentPair())
-                    promptTrigger.promptGenerator.ShowNextPrompt();
-                else
-                    promptTrigger.promptGenerator.Hide();
-            }
-
-            _occupied = false;
-            return;
+            Instantiate(servePoofVfx, transform.position, Quaternion.identity);
         }
-
-        // Poof + destroy cocktail here
-        PoofAndDestroyDrink(glass);
 
         string prompt = promptTrigger?.promptGenerator?.currentPrompt ?? "UnknownPrompt";
 
-        promptTrigger?.ResetPrompt();
+        if (isAvatarChoiceSpot)
+        {
+            session?.LocalAdvanceAfterServe(avatarType);
+        }
+        else
+        {
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.OnCocktailServed(
+                    avatarType.ToString(),
+                    "",
+                    prompt
+                );
+            }
+            else
+            {
+                Debug.LogError("[TriggerZone] GameManager.Instance is NULL");
+            }
+        }
+
+        Destroy(go);
 
         if (promptTrigger?.promptGenerator != null)
         {
             if (promptTrigger.promptGenerator.HasMorePromptsInCurrentPair())
+            {
                 promptTrigger.promptGenerator.ShowNextPrompt();
+            }
             else
+            {
                 promptTrigger.promptGenerator.Hide();
+
+                if (GameManager.Instance != null)
+                    GameManager.Instance.FinishExperience();
+            }
         }
-
-        _occupied = false;
-    }
-
-    private System.Collections.IEnumerator ReleasePhysicsNextFrame(Rigidbody rb)
-    {
-        yield return null;
-
-        if (!rb) yield break;
-
-        rb.isKinematic = false;
-        rb.useGravity = true;
-        rb.linearVelocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
     }
 
     public void ShowHighlight()

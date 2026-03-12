@@ -14,9 +14,7 @@ public class PromptResultsLogger : MonoBehaviour
 
         using (StreamWriter writer = new StreamWriter(path))
         {
-            writer.WriteLine("Prompt,Avatar,Timestamp,PlayerID,RoundIndex");
-
-            foreach (var entry in results)
+            writer.WriteLine("Prompt,Avatar,SodaML,HotSauceML,StrawberryML,Timestamp,PlayerID,RoundIndex"); foreach (var entry in results)
             {
                 // Basic CSV safety: replace commas/newlines
                 string p = (entry.prompt ?? "").Replace(",", " ").Replace("\n", " ").Replace("\r", " ");
@@ -24,7 +22,7 @@ public class PromptResultsLogger : MonoBehaviour
                 string t = (entry.timestamp ?? "").Replace(",", " ");
                 string id = (entry.playerID ?? "").Replace(",", " ");
 
-                writer.WriteLine($"{p},{a},{t},{id},{entry.roundIndex}");
+                writer.WriteLine($"{p},{a},{entry.sodaML},{entry.hotSauceML},{entry.strawberryML},{t},{id},{entry.roundIndex}");
             }
         }
 

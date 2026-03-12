@@ -17,6 +17,7 @@ public class PromptGenerator : MonoBehaviour
     private int currentPromptIndex = 0;
     private int currentDisplayedClipIndex = -1;
 
+   
     public void ShowNextPrompt()
     {
         Debug.Log("ShowNextPrompt CALLED");
@@ -24,10 +25,24 @@ public class PromptGenerator : MonoBehaviour
         if (promptManager == null || promptText == null)
             return;
 
-        if (currentPrompts == null || currentPromptIndex >= currentPrompts.Length)
+        // First time loading prompts
+        if (currentPrompts == null)
         {
             currentPrompts = promptManager.GetPromptsForPlayer(playerIndex);
             currentPromptIndex = 0;
+        }
+
+        // If we ran out of prompts → finish experiment
+        if (currentPromptIndex >= currentPrompts.Length)
+        {
+            Debug.Log("[PromptGenerator] No more prompts.");
+
+            Hide();
+
+            if (GameManager.Instance != null)
+                GameManager.Instance.FinishExperience();
+
+            return;
         }
 
         currentPrompt = currentPrompts[currentPromptIndex];
