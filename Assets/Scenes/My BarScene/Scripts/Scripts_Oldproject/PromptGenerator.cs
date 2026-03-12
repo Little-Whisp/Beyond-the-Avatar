@@ -17,7 +17,7 @@ public class PromptGenerator : MonoBehaviour
     private int currentPromptIndex = 0;
     private int currentDisplayedClipIndex = -1;
 
-   
+
     public void ShowNextPrompt()
     {
         Debug.Log("ShowNextPrompt CALLED");

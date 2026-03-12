@@ -104,20 +104,8 @@ public class TriggerZone : MonoBehaviour
 
         Destroy(go);
 
-        if (promptTrigger?.promptGenerator != null)
-        {
-            if (promptTrigger.promptGenerator.HasMorePromptsInCurrentPair())
-            {
-                promptTrigger.promptGenerator.ShowNextPrompt();
-            }
-            else
-            {
-                promptTrigger.promptGenerator.Hide();
+        promptTrigger?.promptGenerator?.ShowNextPrompt();
 
-                if (GameManager.Instance != null)
-                    GameManager.Instance.FinishExperience();
-            }
-        }
     }
 
     public void ShowHighlight()

@@ -12,6 +12,9 @@ public class GameManager : MonoBehaviour
     [Header("End Experience")]
     public GameObject endExperienceUI;
 
+    [Header("Shaker Reference")]
+    public ShakerContainer shaker;
+
     [Header("Scene References")]
     public GameObject barUI;
     public GameObject interactionRoot;
@@ -55,9 +58,20 @@ public class GameManager : MonoBehaviour
 
         currentPrompt = string.IsNullOrEmpty(prompt) ? "UnknownPrompt" : prompt;
         avatarType = string.IsNullOrEmpty(avatarType) ? "UnknownAvatar" : avatarType;
-        drinkType = string.IsNullOrEmpty(drinkType) ? "UnknownDrink" : drinkType;
 
-        Debug.Log($"[GameManager] Drink served | Avatar: {avatarType} | Drink: {drinkType} | Prompt: {currentPrompt}");
+        Debug.Log($"[GameManager] Drink served | Avatar: {avatarType} | Prompt: {currentPrompt}");
+
+        // --- Calculate ingredient percentages ---
+        float sodaPercent = 0f;
+        float hotSaucePercent = 0f;
+        float strawberryPercent = 0f;
+
+        if (shaker != null)
+        {
+            sodaPercent = shaker.mlOld;
+            hotSaucePercent = shaker.mlLife;
+            strawberryPercent = shaker.mlImp;
+        }
 
         if (promptLogger != null)
         {
@@ -65,9 +79,11 @@ public class GameManager : MonoBehaviour
             {
                 prompt = currentPrompt,
                 avatarTag = avatarType,
-                sodaML = 0,
-                hotSauceML = 0,
-                strawberryML = 0,
+
+                sodaML = sodaPercent,
+                hotSauceML = hotSaucePercent,
+                strawberryML = strawberryPercent,
+
                 timestamp = DateTime.UtcNow.ToString("o"),
                 playerID = GetPlayerID(),
                 roundIndex = roundIndex
@@ -81,6 +97,12 @@ public class GameManager : MonoBehaviour
         }
 
         roundIndex++;
+
+        // Clear shaker for next drink
+        if (shaker != null)
+        {
+            shaker.Clear();
+        }
     }
 
     // -----------------------------------------------------
@@ -89,6 +111,7 @@ public class GameManager : MonoBehaviour
 
     public void FinishExperience()
     {
+        Debug.Log("FINISH EXPERIENCE CALLED");
         if (experimentEnded) return;
 
         experimentEnded = true;
