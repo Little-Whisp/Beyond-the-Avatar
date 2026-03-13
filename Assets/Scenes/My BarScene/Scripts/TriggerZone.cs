@@ -96,10 +96,15 @@ public class TriggerZone : MonoBehaviour
             {
                 var shaker = GameManager.Instance.shaker;
 
-                soda = shaker.lastSoda;
-                hot = shaker.lastHot;
-                strawberry = shaker.lastStrawberry;
+                float total = shaker.lastSoda + shaker.lastHot + shaker.lastStrawberry;
 
+                if (total > 0f)
+                {
+                    soda = Mathf.Round((shaker.lastSoda / total) * 100f);
+                    hot = Mathf.Round((shaker.lastHot / total) * 100f);
+                    strawberry = Mathf.Round((shaker.lastStrawberry / total) * 100f);
+                }
+                
                 Debug.Log($"Drink recipe captured → Soda:{soda}% Hot:{hot}% Strawberry:{strawberry}%");
             }
 

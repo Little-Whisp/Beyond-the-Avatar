@@ -12,31 +12,33 @@ public class PromptResultsLogger : MonoBehaviour
     {
         string path = Path.Combine(Application.persistentDataPath, fileName);
 
-        using (StreamWriter writer = new StreamWriter(path))
+        bool fileExists = File.Exists(path);
+
+        using (StreamWriter writer = new StreamWriter(path, true))
         {
-            // Header
-            writer.WriteLine("Prompt,Avatar,SodaML,HotSauceML,StrawberryML,Timestamp,PlayerID,RoundIndex");
+            // Write header only if file is new
+            if (!fileExists)
+            {
+                writer.WriteLine("Prompt,Avatar,SodaPercent,HotSaucePercent,StrawberryPercent,Timestamp,PlayerID,RoundIndex");
+            }
+
+            // SESSION SEPARATOR
+            writer.WriteLine("");
+            writer.WriteLine($"--- NEW SESSION --- Player: {(results.Count > 0 ? results[0].playerID : "Unknown")}  Start: {System.DateTime.Now:yyyy-MM-dd HH:mm:ss} ---");
 
             foreach (var entry in results)
             {
-                // Sanitize text
-                string prompt = (entry.prompt ?? "").Replace("\"", "'").Replace("\n", " ").Replace("\r", " ");
+                string prompt = (entry.prompt ?? "").Replace("\"", "'").Replace("\n", " ");
                 string avatar = (entry.avatarTag ?? "").Replace("\"", "'");
                 string timestamp = (entry.timestamp ?? "").Replace("\"", "'");
                 string playerID = (entry.playerID ?? "").Replace("\"", "'");
 
-                // Format numbers safely
-                string soda = entry.sodaML.ToString(System.Globalization.CultureInfo.InvariantCulture);
-                string hot = entry.hotSauceML.ToString(System.Globalization.CultureInfo.InvariantCulture);
-                string strawberry = entry.strawberryML.ToString(System.Globalization.CultureInfo.InvariantCulture);
-
-                // Write CSV row
                 writer.WriteLine(
                     $"\"{prompt}\"," +
                     $"\"{avatar}\"," +
-                    $"{soda}," +
-                    $"{hot}," +
-                    $"{strawberry}," +
+                    $"{entry.sodaML}," +
+                    $"{entry.hotSauceML}," +
+                    $"{entry.strawberryML}," +
                     $"\"{timestamp}\"," +
                     $"\"{playerID}\"," +
                     $"{entry.roundIndex}"
@@ -46,9 +48,11 @@ public class PromptResultsLogger : MonoBehaviour
 
         Debug.Log($"[PromptResultsLogger] CSV saved to: {path}");
 
+        results.Clear();
+
 #if UNITY_ANDROID && !UNITY_EDITOR
-    Debug.Log("[PromptResultsLogger] Quest path example:");
-    Debug.Log("/sdcard/Android/data/<your.bundle.id>/files/" + fileName);
+        Debug.Log("[PromptResultsLogger] Quest path example:");
+        Debug.Log("/sdcard/Android/data/<your.bundle.id>/files/" + fileName);
 #endif
     }
 }
