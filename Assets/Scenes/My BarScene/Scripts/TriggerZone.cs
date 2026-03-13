@@ -88,12 +88,29 @@ public class TriggerZone : MonoBehaviour
         }
         else
         {
+            float soda = 0f;
+            float hot = 0f;
+            float strawberry = 0f;
+
+            if (GameManager.Instance != null && GameManager.Instance.shaker != null)
+            {
+                var shaker = GameManager.Instance.shaker;
+
+                soda = shaker.lastSoda;
+                hot = shaker.lastHot;
+                strawberry = shaker.lastStrawberry;
+
+                Debug.Log($"Drink recipe captured → Soda:{soda}% Hot:{hot}% Strawberry:{strawberry}%");
+            }
+
             if (GameManager.Instance != null)
             {
                 GameManager.Instance.OnCocktailServed(
                     avatarType.ToString(),
-                    "",
-                    prompt
+                    prompt,
+                    soda,
+                    hot,
+                    strawberry
                 );
             }
             else

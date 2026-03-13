@@ -52,7 +52,7 @@ public class GameManager : MonoBehaviour
     // MAIN LOGGING FUNCTION
     // -----------------------------------------------------
 
-    public void OnCocktailServed(string avatarType, string drinkType, string prompt)
+    public void OnCocktailServed(string avatarType, string prompt, float soda, float hotSauce, float strawberry)
     {
         if (experimentEnded) return;
 
@@ -61,18 +61,6 @@ public class GameManager : MonoBehaviour
 
         Debug.Log($"[GameManager] Drink served | Avatar: {avatarType} | Prompt: {currentPrompt}");
 
-        // --- Calculate ingredient percentages ---
-        float sodaPercent = 0f;
-        float hotSaucePercent = 0f;
-        float strawberryPercent = 0f;
-
-        if (shaker != null)
-        {
-            sodaPercent = shaker.mlOld;
-            hotSaucePercent = shaker.mlLife;
-            strawberryPercent = shaker.mlImp;
-        }
-
         if (promptLogger != null)
         {
             PromptResult result = new PromptResult
@@ -80,9 +68,9 @@ public class GameManager : MonoBehaviour
                 prompt = currentPrompt,
                 avatarTag = avatarType,
 
-                sodaML = sodaPercent,
-                hotSauceML = hotSaucePercent,
-                strawberryML = strawberryPercent,
+                sodaML = soda,
+                hotSauceML = hotSauce,
+                strawberryML = strawberry,
 
                 timestamp = DateTime.UtcNow.ToString("o"),
                 playerID = GetPlayerID(),
@@ -98,13 +86,9 @@ public class GameManager : MonoBehaviour
 
         roundIndex++;
 
-        // Clear shaker for next drink
         if (shaker != null)
-        {
             shaker.Clear();
-        }
     }
-
     // -----------------------------------------------------
     // END EXPERIENCE
     // -----------------------------------------------------

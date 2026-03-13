@@ -14,23 +14,41 @@ public class PromptResultsLogger : MonoBehaviour
 
         using (StreamWriter writer = new StreamWriter(path))
         {
-            writer.WriteLine("Prompt,Avatar,SodaML,HotSauceML,StrawberryML,Timestamp,PlayerID,RoundIndex"); foreach (var entry in results)
-            {
-                // Basic CSV safety: replace commas/newlines
-                string p = (entry.prompt ?? "").Replace(",", " ").Replace("\n", " ").Replace("\r", " ");
-                string a = (entry.avatarTag ?? "").Replace(",", " ");
-                string t = (entry.timestamp ?? "").Replace(",", " ");
-                string id = (entry.playerID ?? "").Replace(",", " ");
+            // Header
+            writer.WriteLine("Prompt,Avatar,SodaML,HotSauceML,StrawberryML,Timestamp,PlayerID,RoundIndex");
 
-                writer.WriteLine($"{p},{a},{entry.sodaML},{entry.hotSauceML},{entry.strawberryML},{t},{id},{entry.roundIndex}");
+            foreach (var entry in results)
+            {
+                // Sanitize text
+                string prompt = (entry.prompt ?? "").Replace("\"", "'").Replace("\n", " ").Replace("\r", " ");
+                string avatar = (entry.avatarTag ?? "").Replace("\"", "'");
+                string timestamp = (entry.timestamp ?? "").Replace("\"", "'");
+                string playerID = (entry.playerID ?? "").Replace("\"", "'");
+
+                // Format numbers safely
+                string soda = entry.sodaML.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                string hot = entry.hotSauceML.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                string strawberry = entry.strawberryML.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+                // Write CSV row
+                writer.WriteLine(
+                    $"\"{prompt}\"," +
+                    $"\"{avatar}\"," +
+                    $"{soda}," +
+                    $"{hot}," +
+                    $"{strawberry}," +
+                    $"\"{timestamp}\"," +
+                    $"\"{playerID}\"," +
+                    $"{entry.roundIndex}"
+                );
             }
         }
 
         Debug.Log($"[PromptResultsLogger] CSV saved to: {path}");
 
 #if UNITY_ANDROID && !UNITY_EDITOR
-        Debug.Log("[PromptResultsLogger] Quest path example:");
-        Debug.Log("/sdcard/Android/data/<your.bundle.id>/files/" + fileName);
+    Debug.Log("[PromptResultsLogger] Quest path example:");
+    Debug.Log("/sdcard/Android/data/<your.bundle.id>/files/" + fileName);
 #endif
     }
 }
