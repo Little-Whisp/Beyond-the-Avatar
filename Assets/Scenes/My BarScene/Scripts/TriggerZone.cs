@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 
 public class TriggerZone : MonoBehaviour
@@ -9,9 +10,16 @@ public class TriggerZone : MonoBehaviour
     [Header("Prompt System")]
     public PromptTrigger promptTrigger;
 
+    [Header("Serve Audio")]
+    public AudioSource audioSource;
+    public AudioClip serveSound;
+
     [Header("Visual (Highlight)")]
     public GameObject zoneVisual;
     public GameObject avatarImageVisual;
+
+    [Header("Zone Text")]
+    public TextMeshProUGUI zoneText;
 
     [Header("Serve VFX (local)")]
     public GameObject servePoofVfx;
@@ -50,6 +58,9 @@ public class TriggerZone : MonoBehaviour
         if (avatarImageVisual != null)
             avatarImageVisual.SetActive(false);
 
+        if (zoneText != null)
+            zoneText.gameObject.SetActive(false);
+
         var ps = GetComponentsInChildren<ParticleSystem>(true);
         foreach (var p in ps)
         {
@@ -77,7 +88,14 @@ public class TriggerZone : MonoBehaviour
 
         if (servePoofVfx != null)
         {
-            Instantiate(servePoofVfx, transform.position, Quaternion.identity);
+            Vector3 pos = transform.position + Vector3.up * 0.1f;
+            GameObject vfx = Instantiate(servePoofVfx, transform.position, Quaternion.identity);
+            Destroy(vfx, 3f);
+        }
+
+        if (audioSource != null && serveSound != null)
+        {
+            audioSource.PlayOneShot(serveSound);
         }
 
         string prompt = promptTrigger?.promptGenerator?.currentPrompt ?? "UnknownPrompt";
@@ -104,7 +122,7 @@ public class TriggerZone : MonoBehaviour
                     hot = Mathf.Round((shaker.lastHot / total) * 100f);
                     strawberry = Mathf.Round((shaker.lastStrawberry / total) * 100f);
                 }
-                
+
                 Debug.Log($"Drink recipe captured → Soda:{soda}% Hot:{hot}% Strawberry:{strawberry}%");
             }
 
@@ -138,6 +156,9 @@ public class TriggerZone : MonoBehaviour
 
         if (avatarImageVisual != null)
             avatarImageVisual.SetActive(true);
+
+        if (zoneText != null)
+            zoneText.gameObject.SetActive(true);
 
         var ps = zoneVisual.GetComponentsInChildren<ParticleSystem>(true);
         foreach (var p in ps)
